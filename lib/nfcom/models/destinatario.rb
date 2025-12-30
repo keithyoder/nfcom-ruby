@@ -2,7 +2,71 @@
 
 module Nfcom
   module Models
+    # Representa o destinatário (cliente) da NF-COM
+    #
+    # O destinatário é o tomador do serviço de comunicação/telecomunicação,
+    # podendo ser pessoa física (CPF) ou pessoa jurídica (CNPJ).
+    #
+    # @example Criar destinatário pessoa física
+    #   destinatario = Nfcom::Models::Destinatario.new(
+    #     cpf: '12345678901',
+    #     razao_social: 'João da Silva',
+    #     tipo_assinante: :residencial,
+    #     email: 'joao@email.com',
+    #     endereco: {
+    #       logradouro: 'Rua das Flores',
+    #       numero: '123',
+    #       bairro: 'Centro',
+    #       municipio: 'Recife',
+    #       uf: 'PE',
+    #       cep: '50000-000',
+    #       codigo_municipio: '2611606'
+    #     }
+    #   )
+    #
+    # @example Criar destinatário pessoa jurídica
+    #   destinatario = Nfcom::Models::Destinatario.new(
+    #     cnpj: '12345678000100',
+    #     razao_social: 'Empresa LTDA',
+    #     tipo_assinante: :comercial,
+    #     inscricao_estadual: '0123456789',
+    #     email: 'contato@empresa.com',
+    #     endereco: { ... }
+    #   )
+    #
+    # @example Validar destinatário
+    #   if destinatario.valido?
+    #     puts "Destinatário válido"
+    #   else
+    #     puts "Erros: #{destinatario.erros.join(', ')}"
+    #   end
+    #
+    # Tipos de assinante disponíveis:
+    # - :comercial (1) - Estabelecimentos comerciais
+    # - :industrial (2) - Indústrias
+    # - :residencial (3) - Residências (padrão para provedores)
+    # - :produtor_rural (4) - Produtores rurais
+    # - :orgao_publico (5) - Órgãos públicos
+    # - :prestador_servico (6) - Prestadores de serviço
+    # - :concessionaria (7) - Concessionárias
+    # - :outros (99) - Outros
+    #
+    # Atributos obrigatórios:
+    # - CNPJ ou CPF (pelo menos um)
+    # - razao_social (nome ou razão social)
+    # - endereco completo
+    #
+    # Atributos opcionais:
+    # - inscricao_estadual (apenas para PJ)
+    # - email (recomendado para envio da nota)
+    #
+    # Validações automáticas:
+    # - Validação de dígitos verificadores de CPF/CNPJ
+    # - Rejeita CPF/CNPJ com todos dígitos iguais
+    # - Valida campos obrigatórios do endereço
     class Destinatario
+      include Utils::Helpers
+
       attr_accessor :cnpj, :cpf, :razao_social, :inscricao_estadual,
                     :tipo_assinante, :endereco, :email
 
@@ -21,7 +85,7 @@ module Nfcom
       def initialize(attributes = {})
         @endereco = Endereco.new
         @tipo_assinante = :residencial # padrão para provedor de internet
-        
+
         attributes.each do |key, value|
           if key == :endereco && value.is_a?(Hash)
             @endereco = Endereco.new(value)
@@ -37,10 +101,10 @@ module Nfcom
 
       def erros
         errors = []
-        errors << "CNPJ ou CPF é obrigatório" if cnpj.to_s.strip.empty? && cpf.to_s.strip.empty?
-        errors << "CNPJ inválido" if !cnpj.to_s.strip.empty? && !cnpj_valido?
-        errors << "CPF inválido" if !cpf.to_s.strip.empty? && !cpf_valido?
-        errors << "Razão social é obrigatória" if razao_social.to_s.strip.empty?
+        errors << 'CNPJ ou CPF é obrigatório' if cnpj.to_s.strip.empty? && cpf.to_s.strip.empty?
+        errors << 'CNPJ inválido' if !cnpj.to_s.strip.empty? && !cnpj_valido?(cnpj)
+        errors << 'CPF inválido' if !cpf.to_s.strip.empty? && !cpf_valido?(cpf)
+        errors << 'Razão social é obrigatória' if razao_social.to_s.strip.empty?
         errors.concat(endereco.erros.map { |e| "Endereço: #{e}" }) unless endereco.valido?
         errors
       end
@@ -55,49 +119,6 @@ module Nfcom
 
       def pessoa_juridica?
         !cnpj.to_s.strip.empty?
-      end
-
-      private
-
-      def cnpj_valido?
-        return false if cnpj.nil?
-        
-        cnpj_limpo = cnpj.gsub(/\D/, '')
-        return false if cnpj_limpo.length != 14
-        return false if cnpj_limpo.chars.uniq.length == 1
-
-        calc_digito = ->(numeros) do
-          multiplicadores = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-          soma = numeros.chars.each_with_index.sum { |d, i| d.to_i * multiplicadores[i + (13 - numeros.length)] }
-          resto = soma % 11
-          resto < 2 ? 0 : 11 - resto
-        end
-
-        base = cnpj_limpo[0..11]
-        digito1 = calc_digito.call(base)
-        digito2 = calc_digito.call(base + digito1.to_s)
-
-        cnpj_limpo[-2].to_i == digito1 && cnpj_limpo[-1].to_i == digito2
-      end
-
-      def cpf_valido?
-        return false if cpf.nil?
-        
-        cpf_limpo = cpf.gsub(/\D/, '')
-        return false if cpf_limpo.length != 11
-        return false if cpf_limpo.chars.uniq.length == 1
-
-        calc_digito = ->(numeros, peso_inicial) do
-          soma = numeros.chars.each_with_index.sum { |d, i| d.to_i * (peso_inicial - i) }
-          resto = soma % 11
-          resto < 2 ? 0 : 11 - resto
-        end
-
-        base = cpf_limpo[0..8]
-        digito1 = calc_digito.call(base, 10)
-        digito2 = calc_digito.call(base + digito1.to_s, 11)
-
-        cpf_limpo[-2].to_i == digito1 && cpf_limpo[-1].to_i == digito2
       end
     end
   end

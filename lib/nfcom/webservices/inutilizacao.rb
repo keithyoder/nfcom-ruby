@@ -3,7 +3,7 @@
 module Nfcom
   module Webservices
     class Inutilizacao < Base
-      def inutilizar(serie:, numero_inicial:, numero_final:, justificativa:)
+      def inutilizar(serie:, numero_inicial:, numero_final:, justificativa:) # rubocop:disable Metrics/MethodLength
         url = configuration.webservice_url(:inutilizacao)
         raise Errors::ConfigurationError, "URL de inutilização não configurada para #{configuration.estado}" unless url
 
@@ -31,7 +31,7 @@ module Nfcom
           )
 
           extrair_resposta(response, :nfcom_inutilizacao_response)
-        rescue => e
+        rescue StandardError => e
           tratar_erro_soap(e)
         end
       end

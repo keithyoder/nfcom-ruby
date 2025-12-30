@@ -8,8 +8,6 @@ Nfcom.configure do |config|
   config.estado = 'PE'
   config.certificado_path = 'caminho/para/certificado.pfx'
   config.certificado_senha = 'senha'
-  config.csc_id = '000001'
-  config.csc = 'seu_csc'
   config.cnpj = '12345678000100'
   config.razao_social = 'Provedor Internet LTDA'
   config.inscricao_estadual = '0123456789'
@@ -19,7 +17,7 @@ end
 nota = Nfcom::Models::Nota.new do |n|
   n.serie = 1
   n.numero = 1
-  
+
   # Emitente
   n.emitente = Nfcom::Models::Emitente.new(
     cnpj: '12345678000100',
@@ -36,7 +34,7 @@ nota = Nfcom::Models::Nota.new do |n|
       cep: '50000-000'
     }
   )
-  
+
   # Destinatário
   n.destinatario = Nfcom::Models::Destinatario.new(
     cpf: '12345678900',
@@ -53,7 +51,7 @@ nota = Nfcom::Models::Nota.new do |n|
       cep: '51000-000'
     }
   )
-  
+
   # Adicionar item
   n.add_item(
     codigo_servico: '0303',
@@ -67,15 +65,15 @@ end
 
 # Validar nota
 if nota.valida?
-  puts "✓ Nota válida"
-  
+  puts '✓ Nota válida'
+
   # Emitir nota
   begin
     client = Nfcom::Client.new
     resultado = client.autorizar(nota)
-    
+
     if resultado[:autorizada]
-      puts "✓ Nota autorizada!"
+      puts '✓ Nota autorizada!'
       puts "  Chave: #{resultado[:chave]}"
       puts "  Protocolo: #{resultado[:protocolo]}"
       puts "  Data: #{resultado[:data_autorizacao]}"
@@ -83,11 +81,11 @@ if nota.valida?
   rescue Nfcom::Errors::NotaRejeitada => e
     puts "✗ Nota rejeitada [#{e.codigo}]: #{e.motivo}"
   rescue Nfcom::Errors::SefazIndisponivel
-    puts "✗ SEFAZ temporariamente indisponível"
-  rescue => e
+    puts '✗ SEFAZ temporariamente indisponível'
+  rescue StandardError => e
     puts "✗ Erro: #{e.message}"
   end
 else
-  puts "✗ Nota inválida:"
+  puts '✗ Nota inválida:'
   nota.erros.each { |erro| puts "  - #{erro}" }
 end

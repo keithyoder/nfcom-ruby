@@ -4,6 +4,46 @@ require 'nokogiri'
 
 module Nfcom
   module Builder
+    # Constrói o XML da NF-COM conforme layout oficial versão 1.00
+    #
+    # Esta classe é responsável por gerar o documento XML completo da NF-COM,
+    # seguindo rigorosamente o schema e especificações técnicas da SEFAZ.
+    # O XML gerado está pronto para ser assinado digitalmente.
+    #
+    # @example Gerar XML de uma nota
+    #   nota = Nfcom::Models::Nota.new do |n|
+    #     n.serie = 1
+    #     n.numero = 1
+    #     n.emitente = # ... dados do emitente
+    #     n.destinatario = # ... dados do destinatário
+    #     n.add_item(codigo_servico: '0303', descricao: 'Internet', valor_unitario: 99.90)
+    #   end
+    #
+    #   builder = Nfcom::Builder::XmlBuilder.new(nota, Nfcom.configuration)
+    #   xml = builder.gerar
+    #   # => "<?xml version=\"1.0\" encoding=\"UTF-8\"?><NFCom xmlns=\"...
+    #
+    # Estrutura do XML gerado:
+    # - NFCom (raiz)
+    #   - infNFCom (informações da nota)
+    #     - ide (identificação)
+    #     - emit (emitente)
+    #     - dest (destinatário)
+    #     - det (detalhamento dos serviços/itens)
+    #     - total (totalizadores)
+    #     - infAdic (informações adicionais - opcional)
+    #
+    # O builder aplica automaticamente:
+    # - Formatação de valores decimais (2 casas para valores, 4 para quantidades)
+    # - Limitação de tamanho de campos de texto
+    # - Remoção de caracteres especiais em campos numéricos
+    # - Namespace correto do XML (http://www.portalfiscal.inf.br/nfcom)
+    # - Encoding UTF-8
+    #
+    # Versão do layout: 1.00
+    # Modelo: 62 (NF-COM)
+    #
+    # @note O XML gerado ainda NÃO está assinado. Use Nfcom::Builder::Signature para assinar.
     class XmlBuilder
       include Utils::Helpers
 
@@ -62,7 +102,7 @@ module Nfcom
           xml.IM apenas_numeros(nota.emitente.inscricao_municipal) if nota.emitente.inscricao_municipal
           xml.xNome limitar_texto(nota.emitente.razao_social, 60)
           xml.xFant limitar_texto(nota.emitente.nome_fantasia, 60) if nota.emitente.nome_fantasia
-          
+
           gerar_endereco(xml, nota.emitente.endereco, 'emit')
         end
       end
@@ -74,18 +114,18 @@ module Nfcom
           else
             xml.CPF apenas_numeros(nota.destinatario.cpf)
           end
-          
+
           xml.xNome limitar_texto(nota.destinatario.razao_social, 60)
-          
+
           gerar_endereco(xml, nota.destinatario.endereco, 'dest')
-          
+
           xml.indIEDest '9' # 9=Não Contribuinte
           xml.IE apenas_numeros(nota.destinatario.inscricao_estadual) if nota.destinatario.inscricao_estadual
           xml.email nota.destinatario.email if nota.destinatario.email
         end
       end
 
-      def gerar_endereco(xml, endereco, tipo)
+      def gerar_endereco(xml, endereco, _tipo)
         xml.enderEmit do
           xml.xLgr limitar_texto(endereco.logradouro, 60)
           xml.nro limitar_texto(endereco.numero, 60)
@@ -112,8 +152,8 @@ module Nfcom
               xml.uMed item.unidade
               xml.qFaturada formatar_decimal(item.quantidade, 4)
               xml.vProd formatar_decimal(item.valor_unitario)
-              xml.vDesc formatar_decimal(item.valor_desconto) if item.valor_desconto > 0
-              xml.vOutro formatar_decimal(item.valor_outras_despesas) if item.valor_outras_despesas > 0
+              xml.vDesc formatar_decimal(item.valor_desconto) if item.valor_desconto.positive?
+              xml.vOutro formatar_decimal(item.valor_outras_despesas) if item.valor_outras_despesas.positive?
             end
 
             # Impostos (simplificado - expandir conforme necessário)

@@ -16,6 +16,7 @@ module Nfcom
       def valido?
         return false if @cert.nil? || @key.nil?
         return false if expirado?
+
         true
       end
 
@@ -25,7 +26,8 @@ module Nfcom
 
       def dias_para_vencer
         return 0 if expirado?
-        ((@cert.not_after - Time.now) / 86400).to_i
+
+        ((@cert.not_after - Time.now) / 86_400).to_i
       end
 
       def cnpj
@@ -49,7 +51,7 @@ module Nfcom
 
         begin
           conteudo = File.read(@path)
-          
+
           # Tenta carregar como PKCS12 (.pfx)
           if @path.end_with?('.pfx', '.p12')
             pkcs12 = OpenSSL::PKCS12.new(conteudo, @password)
@@ -72,12 +74,12 @@ module Nfcom
       end
 
       def validar_certificado
-        raise Errors::CertificateError, "Certificado não é válido" unless @cert.verify(@cert.public_key)
-        raise Errors::CertificateError, "Certificado está expirado" if expirado?
-        
-        if dias_para_vencer <= 30
-          warn "ATENÇÃO: Certificado vence em #{dias_para_vencer} dias!"
-        end
+        raise Errors::CertificateError, 'Certificado não é válido' unless @cert.verify(@cert.public_key)
+        raise Errors::CertificateError, 'Certificado está expirado' if expirado?
+
+        return unless dias_para_vencer <= 30
+
+        warn "ATENÇÃO: Certificado vence em #{dias_para_vencer} dias!"
       end
     end
   end

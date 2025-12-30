@@ -1,0 +1,103 @@
+require:
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'node_modules/**/*'
+    - 'bin/**/*'
+
+# Configurações de estilo
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: single_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+# Métricas
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'examples/**/*'
+
+Metrics/MethodLength:
+  Max: 25
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/nfcom/builder/**/*'  # Builders naturalmente têm métodos longos para gerar XML
+
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - 'lib/nfcom/builder/**/*'  # Builders podem ser mais longos
+
+Metrics/ModuleLength:
+  Max: 150
+
+Metrics/AbcSize:
+  Max: 25  # Aumentado para permitir validações complexas
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/nfcom/builder/**/*'  # Builders têm alta complexidade por gerarem XML
+  AllowedMethods:
+    - erros          # Métodos de validação naturalmente complexos
+    - initialize     # Construtores podem ser complexos
+
+Metrics/CyclomaticComplexity:
+  Max: 10  # Validações têm muitas condições
+  AllowedMethods:
+    - erros
+    - initialize
+
+Metrics/PerceivedComplexity:
+  Max: 10  # Validações têm muitas condições
+  AllowedMethods:
+    - erros
+    - initialize
+
+# Layout
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'spec/**/*'
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+# Naming
+
+Naming/VariableNumber:
+  Enabled: false
+
+Naming/MethodParameterName:
+  MinNameLength: 2
+
+# Lint
+
+Lint/MissingSuper:
+  Enabled: false
+
+# RSpec
+
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/NestedGroups:
+  Max: 5
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10

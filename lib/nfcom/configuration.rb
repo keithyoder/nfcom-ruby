@@ -23,9 +23,6 @@ module Nfcom
     # Certificado digital
     attr_accessor :certificado_path, :certificado_senha
 
-    # CSC (Código de Segurança do Contribuinte)
-    attr_accessor :csc_id, :csc
-
     # Dados do emitente
     attr_accessor :cnpj, :razao_social, :inscricao_estadual, :regime_tributario
 
@@ -67,10 +64,10 @@ module Nfcom
 
     def webservice_url(servico)
       base_url = if homologacao?
-        webservices_homologacao[estado.to_sym]
-      else
-        webservices_producao[estado.to_sym]
-      end
+                   webservices_homologacao[estado.to_sym]
+                 else
+                   webservices_producao[estado.to_sym]
+                 end
 
       return nil unless base_url
 

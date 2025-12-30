@@ -6,7 +6,7 @@ RSpec.describe Nfcom::Models::Nota do
   describe '#initialize' do
     it 'creates a new nota with default values' do
       nota = described_class.new
-      
+
       expect(nota.serie).to eq(1)
       expect(nota.itens).to be_empty
       expect(nota.total).to be_a(Nfcom::Models::Total)
@@ -30,16 +30,20 @@ RSpec.describe Nfcom::Models::Nota do
     end
 
     it 'sets the item number automatically' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 10)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 20)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307',
+                    valor_unitario: 10)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307',
+                    valor_unitario: 20)
 
       expect(nota.itens[0].numero_item).to eq(1)
       expect(nota.itens[1].numero_item).to eq(2)
     end
 
     it 'recalculates totals after adding item' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 50.00)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 30.00)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307',
+                    valor_unitario: 50.00)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307',
+                    valor_unitario: 30.00)
 
       expect(nota.total.valor_servicos).to eq(80.00)
       expect(nota.total.valor_total).to eq(80.00)

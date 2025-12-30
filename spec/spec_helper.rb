@@ -6,7 +6,7 @@ require 'vcr'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
-  config.example_status_persistence_file_path = ".rspec_status"
+  config.example_status_persistence_file_path = '.rspec_status'
 
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
@@ -16,23 +16,23 @@ RSpec.configure do |config|
   end
 
   # Reset configuration before each test
-  config.before(:each) do
+  config.before do
     Nfcom.reset_configuration!
   end
 end
 
 # VCR configuration for recording HTTP interactions
 VCR.configure do |config|
-  config.cassette_library_dir = "spec/vcr_cassettes"
+  config.cassette_library_dir = 'spec/vcr_cassettes'
   config.hook_into :webmock
   config.configure_rspec_metadata!
-  
+
   # Filter sensitive data
-  config.filter_sensitive_data('<CERTIFICADO>') { |interaction| 
+  config.filter_sensitive_data('<CERTIFICADO>') do |interaction|
     # Hide certificate data from recordings
     interaction.request.headers['Authorization']&.first
-  }
-  
+  end
+
   config.filter_sensitive_data('<CSC>') do
     ENV['NFCOM_CSC'] || 'fake_csc'
   end

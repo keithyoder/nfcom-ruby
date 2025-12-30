@@ -20,7 +20,7 @@ module Nfcom
           )
 
           extrair_resposta(response, :nfcom_autorizacao_response)
-        rescue => e
+        rescue StandardError => e
           tratar_erro_soap(e)
         end
       end
