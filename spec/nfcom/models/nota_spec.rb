@@ -30,20 +30,16 @@ RSpec.describe Nfcom::Models::Nota do
     end
 
     it 'sets the item number automatically' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307',
-                    valor_unitario: 10)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307',
-                    valor_unitario: 20)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 10)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 20)
 
       expect(nota.itens[0].numero_item).to eq(1)
       expect(nota.itens[1].numero_item).to eq(2)
     end
 
     it 'recalculates totals after adding item' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307',
-                    valor_unitario: 50.00)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307',
-                    valor_unitario: 30.00)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 50.00)
+      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 30.00)
 
       expect(nota.total.valor_servicos).to eq(80.00)
       expect(nota.total.valor_total).to eq(80.00)
@@ -74,8 +70,8 @@ RSpec.describe Nfcom::Models::Nota do
       nota.gerar_chave_acesso
 
       expect(nota.chave_acesso).to match(/\A\d{44}\z/)
-      expect(nota.chave_acesso[0..1]).to eq('26') # PE
-      expect(nota.chave_acesso[25..26]).to eq('62') # Modelo
+      expect(nota.chave_acesso[0..1]).to eq('26') # PE (UF)
+      expect(nota.chave_acesso[20..21]).to eq('62') # Modelo
     end
 
     it 'generates different keys for different notas' do
@@ -109,7 +105,7 @@ RSpec.describe Nfcom::Models::Nota do
     end
     let(:destinatario) do
       Nfcom::Models::Destinatario.new(
-        cpf: '12345678901',
+        cpf: '12345678909', # CPF válido para testes
         razao_social: 'Cliente Teste',
         endereco: {
           logradouro: 'Av Teste',

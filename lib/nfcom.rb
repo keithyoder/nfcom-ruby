@@ -5,6 +5,10 @@ require_relative 'nfcom/configuration'
 require_relative 'nfcom/client'
 require_relative 'nfcom/errors'
 
+# Utils
+require_relative 'nfcom/utils/certificate'
+require_relative 'nfcom/utils/helpers'
+
 # Models
 require_relative 'nfcom/models/nota'
 require_relative 'nfcom/models/emitente'
@@ -31,10 +35,6 @@ require_relative 'nfcom/validators/business_rules'
 
 # Parsers
 require_relative 'nfcom/parsers/response_parser'
-
-# Utils
-require_relative 'nfcom/utils/certificate'
-require_relative 'nfcom/utils/helpers'
 
 # Gem Nfcom - Emissão de NF-COM (Nota Fiscal de Comunicação) modelo 62
 #

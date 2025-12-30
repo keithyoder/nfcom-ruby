@@ -178,8 +178,9 @@ module Nfcom
       end
 
       def gerar_chave_acesso
-        # Formato da chave: UFAnoMesCNPJModSerieNumCodNumDV
-        # Exemplo: 26 2212 12345678000100 62 001 000000001 12345678 9
+        # Formato da chave: UFAnoMesCNPJModSerieNumTpEmissCodNumDV
+        # UF(2) + AAMM(4) + CNPJ(14) + Mod(2) + Serie(3) + Num(9) + TpEmiss(1) + CodNum(8) + DV(1) = 44
+        # Exemplo: 26 2212 12345678000100 62 001 000000001 1 12345678 9
 
         config = Nfcom.configuration
         uf = config.codigo_uf
@@ -188,9 +189,10 @@ module Nfcom
         modelo = '62'
         serie_fmt = serie.to_s.rjust(3, '0')
         numero_fmt = numero.to_s.rjust(9, '0')
+        tipo_emiss = tipo_emissao_codigo.to_s
         codigo_numerico = SecureRandom.random_number(100_000_000).to_s.rjust(8, '0')
 
-        chave_sem_dv = "#{uf}#{ano_mes}#{cnpj}#{modelo}#{serie_fmt}#{numero_fmt}#{codigo_numerico}"
+        chave_sem_dv = "#{uf}#{ano_mes}#{cnpj}#{modelo}#{serie_fmt}#{numero_fmt}#{tipo_emiss}#{codigo_numerico}"
         dv = calcular_digito_verificador(chave_sem_dv)
 
         @codigo_verificacao = codigo_numerico
