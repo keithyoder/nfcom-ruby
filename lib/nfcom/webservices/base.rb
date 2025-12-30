@@ -44,13 +44,12 @@ module Nfcom
         when Savon::SOAPFault
           raise Errors::SefazError, "Erro SOAP: #{error.message}"
         when Savon::HTTPError
-          if error.http.code == 503
-            raise Errors::SefazIndisponivel, "SEFAZ temporariamente indisponível"
-          else
-            raise Errors::SefazError, "Erro HTTP #{error.http.code}: #{error.message}"
-          end
+          raise Errors::SefazIndisponivel, 'SEFAZ temporariamente indisponível' if error.http.code == 503
+
+          raise Errors::SefazError, "Erro HTTP #{error.http.code}: #{error.message}"
+
         when Errno::ETIMEDOUT, Timeout::Error
-          raise Errors::TimeoutError, "Timeout na comunicação com SEFAZ"
+          raise Errors::TimeoutError, 'Timeout na comunicação com SEFAZ'
         else
           raise Errors::SefazError, "Erro desconhecido: #{error.message}"
         end
@@ -59,7 +58,7 @@ module Nfcom
       def extrair_resposta(response, tag_resposta)
         body = response.body
         body[tag_resposta] || {}
-      rescue => e
+      rescue StandardError => e
         raise Errors::SefazError, "Erro ao processar resposta: #{e.message}"
       end
     end

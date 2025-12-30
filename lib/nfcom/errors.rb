@@ -10,6 +10,7 @@ module Nfcom
     class XmlError < Error; end
     class SefazError < Error; end
     class SefazIndisponivel < SefazError; end
+
     class NotaRejeitada < SefazError
       attr_reader :codigo, :motivo
 
@@ -19,6 +20,7 @@ module Nfcom
         super("Nota rejeitada [#{codigo}]: #{motivo}")
       end
     end
+
     class NotaDenegada < SefazError; end
     class TimeoutError < Error; end
   end

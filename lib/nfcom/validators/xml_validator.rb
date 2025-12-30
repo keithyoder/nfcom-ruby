@@ -9,7 +9,7 @@ module Nfcom
         # TODO: Implementar validação contra XSD
         # Por enquanto, apenas valida se é XML válido
         doc = Nokogiri::XML(xml)
-        
+
         if doc.errors.any?
           erros = doc.errors.map(&:message).join(', ')
           raise Errors::ValidationError, "XML inválido: #{erros}"

@@ -1,0 +1,33 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Toda domingo à meia-noite UTC
+
+jobs:
+  bundler-audit:
+    runs-on: ubuntu-latest
+    name: Bundler Audit
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+
+    - name: Install bundler-audit
+      run: gem install bundler-audit
+
+    - name: Update vulnerability database
+      run: bundle audit --update
+
+    - name: Check for vulnerable dependencies
+      run: bundle audit check

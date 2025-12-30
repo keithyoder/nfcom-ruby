@@ -6,7 +6,7 @@ RSpec.describe Nfcom::Models::Nota do
   describe '#initialize' do
     it 'creates a new nota with default values' do
       nota = described_class.new
-      
+
       expect(nota.serie).to eq(1)
       expect(nota.itens).to be_empty
       expect(nota.total).to be_a(Nfcom::Models::Total)
@@ -70,8 +70,8 @@ RSpec.describe Nfcom::Models::Nota do
       nota.gerar_chave_acesso
 
       expect(nota.chave_acesso).to match(/\A\d{44}\z/)
-      expect(nota.chave_acesso[0..1]).to eq('26') # PE
-      expect(nota.chave_acesso[25..26]).to eq('62') # Modelo
+      expect(nota.chave_acesso[0..1]).to eq('26') # PE (UF)
+      expect(nota.chave_acesso[20..21]).to eq('62') # Modelo
     end
 
     it 'generates different keys for different notas' do
@@ -105,7 +105,7 @@ RSpec.describe Nfcom::Models::Nota do
     end
     let(:destinatario) do
       Nfcom::Models::Destinatario.new(
-        cpf: '12345678901',
+        cpf: '12345678909', # CPF válido para testes
         razao_social: 'Cliente Teste',
         endereco: {
           logradouro: 'Av Teste',
