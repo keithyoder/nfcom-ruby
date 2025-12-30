@@ -65,7 +65,7 @@ module Nfcom
     # - Rejeita CPF/CNPJ com todos dígitos iguais
     # - Valida campos obrigatórios do endereço
     class Destinatario
-      include Utils::Helpers
+      include Nfcom::Utils::Helpers
 
       attr_accessor :cnpj, :cpf, :razao_social, :inscricao_estadual,
                     :tipo_assinante, :endereco, :email

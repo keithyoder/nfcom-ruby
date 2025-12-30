@@ -56,7 +56,7 @@ module Nfcom
     # @note O emitente deve estar cadastrado e credenciado na SEFAZ para
     #   emissão de NF-COM antes de usar esta gem.
     class Emitente
-      include Utils::Helpers
+      include Nfcom::Utils::Helpers
 
       attr_accessor :cnpj, :razao_social, :nome_fantasia, :inscricao_estadual,
                     :inscricao_municipal, :cnae, :regime_tributario, :endereco
