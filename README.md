@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/keithyoder/nfcom-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/keithyoder/nfcom-ruby/actions/workflows/ci.yml)
 [![RuboCop](https://github.com/keithyoder/nfcom-ruby/actions/workflows/rubocop.yml/badge.svg)](https://github.com/keithyoder/nfcom-ruby/actions/workflows/rubocop.yml)
+[![Security](https://github.com/keithyoder/nfcom-ruby/actions/workflows/security.yml/badge.svg)](https://github.com/keithyoder/nfcom-ruby/actions/workflows/security.yml)
 [![Gem Version](https://badge.fury.io/rb/nfcom.svg)](https://badge.fury.io/rb/nfcom)
 
 Biblioteca Ruby para emissão de NF-COM (Nota Fiscal de Comunicação) modelo 62, desenvolvida especialmente para provedores de internet e empresas de telecomunicação.
