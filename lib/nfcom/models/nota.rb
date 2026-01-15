@@ -4,12 +4,13 @@ require 'securerandom'
 
 module Nfcom
   module Models
-    # Representa uma Nota Fiscal de ComunicaÃ§Ã£o (NF-COM) modelo 62
+    # Representa uma Nota Fiscal de Comunicação (NF-COM) modelo 62.
     #
-    # A Nota Ã© o objeto principal da gem, agregando todas as informaÃ§Ãµes
-    # necessÃ¡rias para emissÃ£o: emitente, destinatÃ¡rio, itens/serviÃ§os e totalizadores.
+    # A Nota é o objeto principal da gem, responsável por agregar todas as
+    # informações necessárias para a emissão da NF-COM:
+    # emitente, destinatário, fatura, itens/serviços, totais e metadados fiscais.
     #
-    # @example Criar nota completa
+    # @example Criar uma nota completa
     #   nota = Nfcom::Models::Nota.new do |n|
     #     n.serie = 1
     #     n.numero = 1
@@ -22,14 +23,20 @@ module Nfcom
     #       endereco: { ... }
     #     )
     #
-    #     # DestinatÃ¡rio (cliente)
+    #     # Destinatário (cliente)
     #     n.destinatario = Nfcom::Models::Destinatario.new(
     #       cpf: '12345678901',
-    #       razao_social: 'JoÃ£o da Silva',
+    #       razao_social: 'João da Silva',
     #       endereco: { ... }
     #     )
     #
-    #     # Adicionar serviÃ§os
+    #     # Fatura (obrigatória)
+    #     n.fatura = Nfcom::Models::Fatura.new(
+    #       valor_liquido: 99.90,
+    #       data_vencimento: Date.today + 10
+    #     )
+    #
+    #     # Adicionar serviços
     #     n.add_item(
     #       codigo_servico: '0303',
     #       descricao: 'Plano Fibra 100MB',
@@ -41,82 +48,92 @@ module Nfcom
     #
     # @example Validar nota antes de emitir
     #   if nota.valida?
-    #     puts "Nota vÃ¡lida, pronta para emissÃ£o"
+    #     puts 'Nota válida, pronta para emissão'
     #   else
-    #     puts "Erros encontrados:"
+    #     puts 'Erros encontrados:'
     #     nota.erros.each { |erro| puts "  - #{erro}" }
     #   end
     #
     # @example Emitir nota
-    #   # A chave de acesso Ã© gerada automaticamente
+    #   # A chave de acesso é gerada automaticamente
     #   nota.gerar_chave_acesso
     #
-    #   # Enviar para SEFAZ
+    #   # Enviar para a SEFAZ
     #   client = Nfcom::Client.new
     #   resultado = client.autorizar(nota)
     #
     #   if resultado[:autorizada]
-    #     puts "Nota autorizada!"
+    #     puts 'Nota autorizada!'
     #     puts "Chave: #{nota.chave_acesso}"
     #     puts "Protocolo: #{nota.protocolo}"
     #   end
     #
-    # @example Adicionar mÃºltiplos serviÃ§os
+    # @example Adicionar múltiplos serviços
     #   nota.add_item(codigo_servico: '0303', descricao: 'Internet', valor_unitario: 99.90)
     #   nota.add_item(codigo_servico: '0304', descricao: 'TV', valor_unitario: 79.90)
-    #   # Total Ã© recalculado automaticamente
+    #   # O total é recalculado automaticamente
     #
-    # @example Nota com informaÃ§Ãµes adicionais
-    #   nota.informacoes_adicionais = "Cliente isento de ICMS conforme decreto XYZ"
+    # @example Nota com informações adicionais
+    #   nota.informacoes_adicionais = 'Cliente isento de ICMS conforme decreto XYZ'
     #
-    # Tipos de EmissÃ£o:
-    # - :normal (1) - EmissÃ£o normal (padrÃ£o)
-    # - :contingencia (2) - EmissÃ£o em contingÃªncia (offline)
+    # Tipos de Emissão:
+    # - :normal (1)        - Emissão normal (padrão)
+    # - :contingencia (2)  - Emissão em contingência (offline)
     #
     # Finalidades:
-    # - :normal (1) - Nota fiscal normal (padrÃ£o)
-    # - :complementar (2) - Nota complementar
-    # - :ajuste (3) - Nota de ajuste
-    # - :devolucao (4) - Nota de devoluÃ§Ã£o
+    # - :normal (0)         - Nota fiscal normal (padrão)
+    # - :substituicao (3)   - Nota de substituição
+    # - :ajuste (4)         - Nota de ajuste
     #
-    # Atributos obrigatÃ³rios:
-    # - serie (sÃ©rie da nota, padrÃ£o: 1)
-    # - numero (nÃºmero sequencial da nota)
-    # - emitente (provedor/empresa)
-    # - destinatario (cliente/tomador do serviÃ§o)
-    # - itens (pelo menos um item/serviÃ§o)
+    # Tipos de Faturamento:
+    # - :normal (0)         - Faturamento padrão
+    # - :centralizado (1)   - Faturamento centralizado
+    # - :cofaturamento (2)  - Cofaturamento
+    #
+    # Atributos obrigatórios:
+    # - serie               - Série da nota (padrão: 1)
+    # - numero              - Número sequencial da nota
+    # - emitente            - Provedor / empresa emissora
+    # - destinatario        - Cliente / tomador do serviço
+    # - fatura              - Informações de cobrança (obrigatória)
+    # - itens               - Pelo menos um item/serviço
     #
     # Atributos opcionais:
-    # - data_emissao (padrÃ£o: Time.now)
-    # - tipo_emissao (padrÃ£o: :normal)
-    # - finalidade (padrÃ£o: :normal)
-    # - informacoes_adicionais (texto livre atÃ© 5000 caracteres)
+    # - data_emissao             - Data/hora de emissão (padrão: Time.now)
+    # - tipo_emissao             - Tipo de emissão (padrão: :normal)
+    # - finalidade               - Finalidade da nota (padrão: :normal)
+    # - informacoes_adicionais   - Texto livre (até 5.000 caracteres)
     #
-    # Atributos preenchidos apÃ³s autorizaÃ§Ã£o:
-    # - chave_acesso (44 dÃ­gitos, gerada automaticamente)
-    # - codigo_verificacao (8 dÃ­gitos aleatÃ³rios)
-    # - protocolo (nÃºmero do protocolo da SEFAZ)
-    # - data_autorizacao (data/hora da autorizaÃ§Ã£o)
-    # - xml_autorizado (XML completo com assinatura e protocolo)
+    # Atributos preenchidos após autorização:
+    # - chave_acesso        - Chave de acesso (44 dígitos)
+    # - codigo_verificacao  - Código numérico (cNF, 7 dígitos – usado no XML)
+    # - protocolo           - Número do protocolo SEFAZ
+    # - data_autorizacao    - Data/hora da autorização
+    # - xml_autorizado      - XML completo autorizado pela SEFAZ
     #
-    # Funcionalidades automÃ¡ticas:
-    # - NumeraÃ§Ã£o sequencial de itens ao adicionar
-    # - RecÃ¡lculo automÃ¡tico de totais ao adicionar/remover itens
-    # - GeraÃ§Ã£o da chave de acesso (44 dÃ­gitos com DV)
-    # - ValidaÃ§Ã£o completa de todos os campos obrigatÃ³rios
-    # - ValidaÃ§Ã£o em cascata (emitente, destinatÃ¡rio, itens)
+    # Funcionalidades automáticas:
+    # - Numeração sequencial dos itens
+    # - Recalculo automático dos totais
+    # - Geração da chave de acesso com dígito verificador
+    # - Validação completa de todos os campos obrigatórios
+    # - Validação em cascata (emitente, destinatário, fatura e itens)
     #
-    # ValidaÃ§Ãµes realizadas:
-    # - PresenÃ§a de sÃ©rie, nÃºmero, emitente e destinatÃ¡rio
-    # - Pelo menos um item na nota
-    # - ValidaÃ§Ã£o completa do emitente (CNPJ, IE, endereÃ§o)
-    # - ValidaÃ§Ã£o completa do destinatÃ¡rio (CPF/CNPJ, endereÃ§o)
-    # - ValidaÃ§Ã£o de cada item (cÃ³digo serviÃ§o, CFOP, valores)
+    # Validações realizadas:
+    # - Presença de série, número, emitente, destinatário e fatura
+    # - Existência de pelo menos um item
+    # - Validação completa do emitente (CNPJ, IE, endereço)
+    # - Validação completa do destinatário (CPF/CNPJ, endereço)
+    # - Validação da fatura
+    # - Validação individual de cada item
     #
-    # @note A chave de acesso Ã© gerada no formato:
-    #   UF (2) + AAMM (4) + CNPJ (14) + Modelo (2) + SÃ©rie (3) +
-    #   NÃºmero (9) + CÃ³digo NumÃ©rico (8) + DV (1) = 44 dÃ­gitos
-    class Nota
+    # @note Formato da chave de acesso (44 dígitos):
+    #   UF (2) + AAMM (4) + CNPJ (14) + Modelo (2) + Série (3) +
+    #   Número (9) + Tipo Emissão (1) + Código Numérico (8) + DV (1)
+    #
+    # @note Importante:
+    #   - O campo cNF no XML possui 7 dígitos
+    #   - Na chave de acesso, o código numérico é representado com 8 dígitos
+    class Nota # rubocop:disable Metrics/ClassLength
       attr_accessor :serie, :numero, :data_emissao, :tipo_emissao, :fatura,
                     :finalidade, :emitente, :destinatario, :assinante, :itens, :total,
                     :informacoes_adicionais, :chave_acesso, :codigo_verificacao,
@@ -290,7 +307,7 @@ module Nfcom
         erros.empty?
       end
 
-      def erros
+      def erros # rubocop:disable Metrics/MethodLength
         errors = []
         errors << 'Série é obrigatória' if serie.nil?
         errors << 'Número é obrigatório' if numero.nil?

@@ -19,7 +19,7 @@ module Nfcom
         doc.remove_namespaces!
 
         # Verificar se tem Fault
-        if fault = doc.at_xpath('//Fault')
+        if (fault = doc.at_xpath('//Fault'))
           error_msg = fault.at_xpath('.//Text')&.text || 'Erro desconhecido'
           raise Errors::SefazError, "Erro SOAP: #{error_msg}"
         end

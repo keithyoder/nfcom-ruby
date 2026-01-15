@@ -48,11 +48,8 @@ module Nfcom
         # Calculate signature of canonicalized SignedInfo
         signature_value = calculate_signature(signed_info)
 
-        # Get certificate
-        cert_value = get_certificate_value
-
         # Build complete Signature element
-        signature_xml = build_signature_xml(signed_info, signature_value, cert_value)
+        signature_xml = build_signature_xml(signed_info, signature_value, certificate_value)
 
         # Insert Signature into NFCom
         insert_signature(doc, signature_xml)
@@ -109,7 +106,7 @@ module Nfcom
         Base64.strict_encode64(signature)
       end
 
-      def get_certificate_value
+      def certificate_value
         # Get certificate as DER, then Base64 encode
         # Remove PEM headers/footers, just the certificate data
         cert_der = @certificate.cert.to_der

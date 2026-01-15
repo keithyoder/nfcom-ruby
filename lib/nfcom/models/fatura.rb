@@ -140,7 +140,7 @@ module Nfcom
 
         # Validar se o mês é válido (01-12)
         mes = competencia[-2..].to_i
-        mes >= 1 && mes <= 12
+        mes.between?(1, 12)
       end
 
       def data_vencimento_valida?

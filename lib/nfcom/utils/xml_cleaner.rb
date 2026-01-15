@@ -12,7 +12,7 @@ module Nfcom
         #
         # @param xml [String] XML a ser limpo
         # @return [String] XML limpo e pronto para envio
-        def clean(xml)
+        def clean(xml) # rubocop:disable Metrics/AbcSize
           xml = xml.dup
 
           # Trabalha com encoding binário primeiro para remover BOMs

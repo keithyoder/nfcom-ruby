@@ -47,7 +47,7 @@ module Nfcom
         validate_http_response(response)
 
         Nokogiri::XML(response.body)
-      rescue Net::OpenTimeout, Net::ReadTimeout, Timeout::Error
+      rescue Net::OpenTimeout, Net::ReadTimeout, Timeout::Error # rubocop:disable Lint/ShadowedException
         raise Errors::TimeoutError, 'Timeout na comunicação com SEFAZ'
       rescue OpenSSL::SSL::SSLError => e
         raise Errors::SefazError, "Erro SSL: #{e.message}"

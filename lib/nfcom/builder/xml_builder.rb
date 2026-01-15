@@ -130,7 +130,8 @@ module Nfcom
           # Código único do assinante (1-30 caracteres)
           xml.iCodAssinante limitar_texto(assinante.codigo, 30)
 
-          # Tipo: 1=Comercial, 2=Industrial, 3=Residencial, 4=Rural, 5=Público, 6=Telecom, 7=Diplomático, 8=Religioso, 99=Outros
+          # Tipo: 1=Comercial, 2=Industrial, 3=Residencial, 4=Rural, 5=Público, 6=Telecom,
+          # 7=Diplomático, 8=Religioso, 99=Outros
           xml.tpAssinante assinante.tipo
 
           # Tipo serviço: 1=Telefonia, 2=Dados, 3=TV, 4=Internet, 5=Multimídia, 6=Outros, 7=Vários
@@ -331,12 +332,7 @@ module Nfcom
       # Gera a URL do QR Code para consulta da NFCom
       # @return [String] URL completa do QR Code
       def gerar_qrcode
-        # URLs diferentes para homologação e produção
-        base_url = if configuration.homologacao?
-                     'https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode'
-                   else
-                     'https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode' # URL produção (SVRS PE)
-                   end
+        base_url = 'https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode'
 
         # Formato: URL?chNFCom=CHAVE&tpAmb=AMBIENTE
         "#{base_url}?chNFCom=#{nota.chave_acesso}&tpAmb=#{configuration.ambiente_codigo}"

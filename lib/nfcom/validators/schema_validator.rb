@@ -4,11 +4,31 @@ module Nfcom
   module Validators
     # Validadores baseados no Schema NFCom v1.00
     # Expressões Regulares (ER) conforme documentação oficial SEFAZ
-    module SchemaValidator
+    module SchemaValidator # rubocop:disable Metrics/ModuleLength
       # Expressões Regulares do Schema NFCom
       REGEX_PATTERNS = {
         # ER1 - Data/hora no formato AAAA-MM-DDTHH:MM:SS+HH:MM
-        er1: /\A(((20(([02468][048])|([13579][26]))-02-29))|(20[0-9][0-9])-((((0[1-9])|(1[0-2]))-((0[1-9])|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))T(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d([-,+](0[0-9]|10|11):00|(\+(12):00))\z/,
+        er1: /
+          \A
+          (
+            (20(([02468][048])|([13579][26]))-02-29) |
+            (20[0-9][0-9])-
+            (
+              (((0[1-9])|(1[0-2]))-((0[1-9])|(1\d)|(2[0-8]))) |
+              ((((0[13578])|(1[02]))-31)) |
+              (((0[1,3-9])|(1[0-2]))-(29|30))
+            )
+          )
+          T
+          (20|21|22|23|[0-1]\d):
+          [0-5]\d:
+          [0-5]\d
+          (
+            [-,+](0[0-9]|10|11):00 |
+            (\+(12):00)
+          )
+          \z
+        /x,
 
         # ER2 - 7 dígitos (cNF, cMun, etc)
         er2: /\A[0-9]{7}\z/,
@@ -59,7 +79,19 @@ module Nfcom
         er47: /\A[!-ÿ]{1}[ -ÿ]{0,}[!-ÿ]{1}|[!-ÿ]{1}\z/,
 
         # ER48 - Data AAAA-MM-DD
-        er48: /\A((((20|19|18)(([02468][048])|([13579][26]))-02-29))|((20|19|18)[0-9][0-9])-((((0[1-9])|(1[0-2]))-((0[1-9])|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\z/,
+        er48: /
+          \A
+          (
+            (20|19|18)(([02468][048])|([13579][26]))-02-29 |
+            (20|19|18)[0-9][0-9]-
+            (
+              (((0[1-9])|(1[0-2]))-((0[1-9])|(1\d)|(2[0-8]))) |
+              ((((0[13578])|(1[02]))-31)) |
+              (((0[1,3-9])|(1[0-2]))-(29|30))
+            )
+          )
+          \z
+        /x,
 
         # ER57 - 1 dígito
         er57: /\A[0-9]{1}\z/,
@@ -104,137 +136,106 @@ module Nfcom
         er74: /\A[0-9]{1,6}\z/
       }.freeze
 
-      # Valida um valor contra uma expressão regular específica
-      # @param value [String] Valor a ser validado
-      # @param pattern_key [Symbol] Chave da expressão regular (ex: :er2, :er7)
-      # @return [Boolean] true se válido, false caso contrário
-      def self.validate(value, pattern_key)
-        return false if value.nil?
+      # Valida um valor contra uma expressão regular do schema
+      #
+      # @param valor [String]
+      # @param chave_regex [Symbol] Ex: :er2, :er7
+      # @return [Boolean]
+      def self.valido_por_schema?(valor, chave_regex)
+        return false if valor.nil?
 
-        pattern = REGEX_PATTERNS[pattern_key]
+        pattern = REGEX_PATTERNS[chave_regex]
         return false unless pattern
 
-        value.to_s.match?(pattern)
+        valor.to_s.match?(pattern)
       end
 
-      # Valida cNF (Código Numérico) - deve ter exatamente 7 dígitos
-      # @param cnf [String, Integer] Código numérico
-      # @return [Boolean] true se válido
-      def self.validate_cnf(cnf)
-        validate(cnf.to_s, :er2)
+      # cNF (Código Numérico) – exatamente 7 dígitos
+      def self.cnf_valido?(cnf)
+        valido_por_schema?(cnf.to_s, :er2)
       end
 
-      # Valida CNPJ - 14 dígitos
-      # @param cnpj [String] CNPJ
-      # @return [Boolean] true se válido
-      def self.validate_cnpj_format(cnpj)
-        # Remove formatação
+      # CNPJ – apenas valida formato (14 dígitos)
+      def self.cnpj_formato_valido?(cnpj)
         cnpj_limpo = cnpj.to_s.gsub(/\D/, '')
-        # Valida formato (14 dígitos numéricos)
         cnpj_limpo.length == 14 && cnpj_limpo.match?(/\A[0-9]{14}\z/)
       end
 
-      # Valida CPF - 11 dígitos
-      # @param cpf [String] CPF
-      # @return [Boolean] true se válido
-      def self.validate_cpf_format(cpf)
-        # Remove formatação
+      # CPF – apenas valida formato (11 dígitos)
+      def self.cpf_formato_valido?(cpf)
         cpf_limpo = cpf.to_s.gsub(/\D/, '')
-        validate(cpf_limpo, :er9)
+        valido_por_schema?(cpf_limpo, :er9)
       end
 
-      # Valida CEP - 8 dígitos
-      # @param cep [String] CEP
-      # @return [Boolean] true se válido
-      def self.validate_cep(cep)
-        # Remove formatação
+      # CEP – 8 dígitos
+      def self.cep_valido?(cep)
         cep_limpo = cep.to_s.gsub(/\D/, '')
-        validate(cep_limpo, :er67)
+        valido_por_schema?(cep_limpo, :er67)
       end
 
-      # Valida código de município - 7 dígitos
-      # @param codigo [String, Integer] Código IBGE
-      # @return [Boolean] true se válido
-      def self.validate_codigo_municipio(codigo)
-        validate(codigo.to_s, :er2)
+      # Código de município (IBGE) – 7 dígitos
+      def self.codigo_municipio_valido?(codigo)
+        valido_por_schema?(codigo.to_s, :er2)
       end
 
-      # Valida número da nota fiscal - 1 a 999999999
-      # @param numero [String, Integer] Número da NF
-      # @return [Boolean] true se válido
-      def self.validate_numero_nf(numero)
-        validate(numero.to_s, :er43)
+      # Número da NF – 1 a 999.999.999
+      def self.numero_nf_valido?(numero)
+        valido_por_schema?(numero.to_s, :er43)
       end
 
-      # Valida série - 0 a 999
-      # @param serie [String, Integer] Série
-      # @return [Boolean] true se válido
-      def self.validate_serie(serie)
-        validate(serie.to_s, :er44)
+      # Série da NF – 0 a 999
+      def self.serie_valida?(serie)
+        valido_por_schema?(serie.to_s, :er44)
       end
 
-      # Valida email
-      # @param email [String] Email
-      # @return [Boolean] true se válido
-      def self.validate_email(email)
-        return true if email.nil? || email.to_s.strip.empty? # Email é opcional
+      # Email (opcional)
+      def self.email_valido?(email)
+        return true if email.nil? || email.to_s.strip.empty?
 
-        validate(email.to_s, :er72)
+        valido_por_schema?(email.to_s, :er72)
       end
 
-      # Valida telefone - 7 a 12 dígitos
-      # @param telefone [String] Telefone
-      # @return [Boolean] true se válido
-      def self.validate_telefone(telefone)
-        return true if telefone.nil? || telefone.to_s.strip.empty? # Telefone é opcional
+      # Telefone (opcional) – 7 a 12 dígitos
+      def self.telefone_valido?(telefone)
+        return true if telefone.nil? || telefone.to_s.strip.empty?
 
         telefone_limpo = telefone.to_s.gsub(/\D/, '')
-        validate(telefone_limpo, :er61)
+        valido_por_schema?(telefone_limpo, :er61)
       end
 
-      # Valida CFOP - formato específico
-      # @param cfop [String] CFOP
-      # @return [Boolean] true se válido
-      def self.validate_cfop(cfop)
-        validate(cfop.to_s, :er73)
+      # CFOP
+      def self.cfop_valido?(cfop)
+        valido_por_schema?(cfop.to_s, :er73)
       end
 
-      # Valida valor monetário (13,2)
-      # @param valor [String, Numeric] Valor
-      # @return [Boolean] true se válido
-      def self.validate_valor(valor)
-        validate(valor.to_s, :er36)
+      # Valor monetário (13,2)
+      def self.valor_valido?(valor)
+        valido_por_schema?(valor.to_s, :er36)
       end
 
-      # Valida texto geral (não pode ter apenas espaços)
-      # @param texto [String] Texto
-      # @param tamanho_max [Integer] Tamanho máximo
-      # @return [Boolean] true se válido
-      def self.validate_texto(texto, tamanho_max = nil)
+      # Texto geral (não pode ser apenas espaços)
+      def self.texto_valido?(texto, tamanho_max = nil)
         return false if texto.nil? || texto.to_s.strip.empty?
         return false if tamanho_max && texto.to_s.length > tamanho_max
 
-        validate(texto.to_s, :er47)
+        valido_por_schema?(texto.to_s, :er47)
       end
 
-      # Valida chave de acesso completa (44 dígitos)
-      # @param chave [String] Chave de acesso
-      # @return [Boolean] true se válido
-      def self.validate_chave_acesso(chave)
-        validate(chave.to_s, :er3)
+      # Chave de acesso – 44 dígitos
+      def self.chave_acesso_valida?(chave)
+        valido_por_schema?(chave.to_s, :er3)
       end
 
-      # Valida ID (com prefixo NFCom)
-      # @param id [String] ID
-      # @return [Boolean] true se válido
-      def self.validate_id(id)
-        validate(id.to_s, :er65)
+      # ID com prefixo NFCom
+      def self.id_valido?(id)
+        valido_por_schema?(id.to_s, :er65)
       end
 
-      # Lista todos os erros de validação de um hash de campos
-      # @param campos [Hash] Hash com campos e valores
-      # @return [Array<String>] Array de mensagens de erro
-      def self.validar_campos(campos)
+      # Executa validações múltiplas e retorna mensagens de erro
+      #
+      # @param campos [Hash]
+      # @return [Array<String>]
+      def self.validar_campos(campos) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
         erros = []
 
         campos.each do |campo, config|
@@ -242,26 +243,26 @@ module Nfcom
           validador = config[:validador]
           nome = config[:nome] || campo.to_s
 
-          resultado = case validador
-                      when :cnf then validate_cnf(valor)
-                      when :cnpj then validate_cnpj_format(valor)
-                      when :cpf then validate_cpf_format(valor)
-                      when :cep then validate_cep(valor)
-                      when :municipio then validate_codigo_municipio(valor)
-                      when :numero_nf then validate_numero_nf(valor)
-                      when :serie then validate_serie(valor)
-                      when :email then validate_email(valor)
-                      when :telefone then validate_telefone(valor)
-                      when :cfop then validate_cfop(valor)
-                      when :valor then validate_valor(valor)
-                      when :texto then validate_texto(valor, config[:max])
-                      when :chave then validate_chave_acesso(valor)
-                      when :id then validate_id(valor)
-                      when Symbol then validate(valor, validador)
-                      else true
-                      end
+          valido = case validador
+                   when :cnf then cnf_valido?(valor)
+                   when :cnpj then cnpj_formato_valido?(valor)
+                   when :cpf then cpf_formato_valido?(valor)
+                   when :cep then cep_valido?(valor)
+                   when :municipio then codigo_municipio_valido?(valor)
+                   when :numero_nf then numero_nf_valido?(valor)
+                   when :serie then serie_valida?(valor)
+                   when :email then email_valido?(valor)
+                   when :telefone then telefone_valido?(valor)
+                   when :cfop then cfop_valido?(valor)
+                   when :valor then valor_valido?(valor)
+                   when :texto then texto_valido?(valor, config[:max])
+                   when :chave then chave_acesso_valida?(valor)
+                   when :id then id_valido?(valor)
+                   when Symbol then valido_por_schema?(valor, validador)
+                   else true
+                   end
 
-          erros << "#{nome} inválido: '#{valor}'" unless resultado
+          erros << "#{nome} inválido: '#{valor}'" unless valido
         end
 
         erros
