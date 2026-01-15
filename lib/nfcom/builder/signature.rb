@@ -1,46 +1,20 @@
 # frozen_string_literal: true
 
+require 'nokogiri'
 require 'openssl'
 require 'base64'
-require 'nokogiri'
 
 module Nfcom
   module Builder
-    # Assina digitalmente o XML da NF-COM usando certificado A1/A3
-    #
-    # Esta classe é responsável por aplicar a assinatura digital no XML da nota fiscal,
-    # utilizando o padrão XML-DSig (XML Digital Signature). A assinatura garante a
-    # autenticidade e integridade do documento fiscal.
-    #
-    # @example Assinar XML de uma nota
-    #   configuration = Nfcom.configuration
-    #   signature = Nfcom::Builder::Signature.new(configuration)
-    #
-    #   xml_sem_assinatura = "<NFCom>...</NFCom>"
-    #   xml_assinado = signature.assinar(xml_sem_assinatura)
-    #   # => "<NFCom>...<Signature>...</Signature></NFCom>"
-    #
-    # O processo de assinatura inclui:
-    # 1. Canonicalização do elemento infNFCom (C14N)
-    # 2. Cálculo do digest SHA-1 do conteúdo
-    # 3. Criação do SignedInfo com referências
-    # 4. Assinatura RSA-SHA1 usando a chave privada do certificado
-    # 5. Inclusão do certificado X509 na assinatura
-    #
-    # Algoritmos utilizados:
-    # - Canonicalização: C14N Exclusive (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
-    # - Digest: SHA-1
-    # - Assinatura: RSA-SHA1
-    #
-    # Requisitos:
-    # - Certificado digital A1 (arquivo .pfx) ou A3 (token/cartão)
-    # - Senha do certificado configurada
-    # - Certificado válido e não expirado
-    #
-    # @raise [Errors::XmlError] Se o elemento infNFCom não for encontrado
-    # @raise [Errors::CertificateError] Se houver problema com o certificado
     class Signature
-      attr_reader :configuration
+      ALGORITHMS = {
+        c14n: 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315',
+        rsa_sha1: 'http://www.w3.org/2000/09/xmldsig#rsa-sha1',
+        sha1: 'http://www.w3.org/2000/09/xmldsig#sha1',
+        enveloped: 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
+      }.freeze
+
+      DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#'
 
       def initialize(configuration)
         @configuration = configuration
@@ -50,96 +24,132 @@ module Nfcom
         )
       end
 
-      def assinar(xml)
-        doc = Nokogiri::XML(xml)
+      def assinar(xml_string)
+        # Parse XML
+        doc = Nokogiri::XML(xml_string)
 
-        # Encontra o nó infNFCom que precisa ser assinado
-        inf_nfcom = doc.at_xpath('//xmlns:infNFCom', 'xmlns' => 'http://www.portalfiscal.inf.br/nfcom')
-        raise Errors::XmlError, 'Elemento infNFCom não encontrado no XML' unless inf_nfcom
+        # Find infNFCom element
+        inf_nfcom = doc.at_xpath(
+          '//nfcom:infNFCom',
+          'nfcom' => 'http://www.portalfiscal.inf.br/nfcom'
+        )
 
-        # Canonicaliza o elemento
-        canon_inf = inf_nfcom.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0)
+        raise Errors::XmlError, 'infNFCom element not found' unless inf_nfcom
 
-        # Calcula o digest (SHA1)
-        digest = OpenSSL::Digest::SHA1.digest(canon_inf)
-        digest_base64 = Base64.strict_encode64(digest)
+        # Get reference URI
+        ref_uri = "##{inf_nfcom['Id']}"
 
-        # Cria SignedInfo
-        signed_info = criar_signed_info(inf_nfcom['Id'], digest_base64)
+        # Calculate digest of canonicalized infNFCom
+        digest_value = calculate_digest(inf_nfcom)
 
-        # Canonicaliza SignedInfo
-        canon_signed_info = Nokogiri::XML(signed_info).root.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0)
+        # Build SignedInfo
+        signed_info = build_signed_info(ref_uri, digest_value)
 
-        # Assina com a chave privada
-        signature_value = @certificate.key.sign(OpenSSL::Digest.new('SHA1'), canon_signed_info)
-        signature_value_base64 = Base64.strict_encode64(signature_value)
+        # Calculate signature of canonicalized SignedInfo
+        signature_value = calculate_signature(signed_info)
 
-        # Adiciona a assinatura ao XML
-        adicionar_assinatura(doc, signed_info, signature_value_base64)
+        # Build complete Signature element
+        signature_xml = build_signature_xml(signed_info, signature_value, certificate_value)
 
+        # Insert Signature into NFCom
+        insert_signature(doc, signature_xml)
+
+        # Return signed XML
         doc.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML)
       end
 
       private
 
-      def criar_signed_info(reference_uri, digest_value)
-        <<~XML
-          <SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
-            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-            <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
-            <Reference URI="##{reference_uri}">
-              <Transforms>
-                <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
-                <Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-              </Transforms>
-              <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-              <DigestValue>#{digest_value}</DigestValue>
-            </Reference>
-          </SignedInfo>
-        XML
+      def calculate_digest(element)
+        # Canonicalize using C14N 1.0
+        canonicalized = element.canonicalize(Nokogiri::XML::XML_C14N_1_0)
+
+        # Calculate SHA1 digest
+        digest = OpenSSL::Digest::SHA1.digest(canonicalized)
+
+        # Return Base64 encoded
+        Base64.strict_encode64(digest)
       end
 
-      def adicionar_assinatura(doc, signed_info_xml, signature_value)
-        nfcom = doc.at_xpath('//xmlns:NFCom', 'xmlns' => 'http://www.portalfiscal.inf.br/nfcom')
+      def build_signed_info(ref_uri, digest_value)
+        builder = Nokogiri::XML::Builder.new do |xml|
+          xml.SignedInfo(xmlns: DSIG_NS) do
+            # Use exact algorithm URIs required by NFCom
+            xml.CanonicalizationMethod(Algorithm: ALGORITHMS[:c14n])
+            xml.SignatureMethod(Algorithm: ALGORITHMS[:rsa_sha1])
 
-        # Cria elemento Signature
-        signature = Nokogiri::XML::Node.new('Signature', doc)
-        signature.add_namespace(nil, 'http://www.w3.org/2000/09/xmldsig#')
+            xml.Reference(URI: ref_uri) do
+              xml.Transforms do
+                xml.Transform(Algorithm: ALGORITHMS[:enveloped])
+                xml.Transform(Algorithm: ALGORITHMS[:c14n])
+              end
+              xml.DigestMethod(Algorithm: ALGORITHMS[:sha1])
+              xml.DigestValue digest_value
+            end
+          end
+        end
 
-        # Adiciona SignedInfo
-        signed_info_node = Nokogiri::XML.fragment(signed_info_xml)
-        signature.add_child(signed_info_node)
-
-        # Adiciona SignatureValue
-        sig_value = Nokogiri::XML::Node.new('SignatureValue', doc)
-        sig_value.content = signature_value
-        signature.add_child(sig_value)
-
-        # Adiciona KeyInfo
-        key_info = criar_key_info(doc)
-        signature.add_child(key_info)
-
-        # Adiciona Signature ao documento
-        nfcom.add_child(signature)
+        builder.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML)
       end
 
-      def criar_key_info(doc)
-        key_info = Nokogiri::XML::Node.new('KeyInfo', doc)
+      def calculate_signature(signed_info_xml)
+        # Parse SignedInfo
+        signed_info_doc = Nokogiri::XML(signed_info_xml)
 
-        x509_data = Nokogiri::XML::Node.new('X509Data', doc)
-        x509_cert = Nokogiri::XML::Node.new('X509Certificate', doc)
+        # Canonicalize using C14N 1.0
+        canonicalized = signed_info_doc.canonicalize(Nokogiri::XML::XML_C14N_1_0)
 
-        # Remove headers do certificado
-        cert_base64 = @certificate.cert.to_pem
-          .gsub('-----BEGIN CERTIFICATE-----', '')
-          .gsub('-----END CERTIFICATE-----', '')
-          .gsub("\n", '')
+        # Sign with RSA-SHA1
+        signature = @certificate.key.sign(OpenSSL::Digest.new('SHA1'), canonicalized)
 
-        x509_cert.content = cert_base64
-        x509_data.add_child(x509_cert)
-        key_info.add_child(x509_data)
+        # Return Base64 encoded
+        Base64.strict_encode64(signature)
+      end
 
-        key_info
+      def certificate_value
+        # Get certificate as DER, then Base64 encode
+        # Remove PEM headers/footers, just the certificate data
+        cert_der = @certificate.cert.to_der
+        Base64.strict_encode64(cert_der)
+      end
+
+      def build_signature_xml(signed_info_xml, signature_value, cert_value)
+        # Parse SignedInfo to get the element
+        signed_info_doc = Nokogiri::XML(signed_info_xml)
+        signed_info_element = signed_info_doc.root
+
+        builder = Nokogiri::XML::Builder.new do |xml|
+          xml.Signature(xmlns: DSIG_NS) do
+            # Insert SignedInfo element
+            xml.parent << signed_info_element
+
+            xml.SignatureValue signature_value
+
+            xml.KeyInfo do
+              xml.X509Data do
+                xml.X509Certificate cert_value
+              end
+            end
+          end
+        end
+
+        builder.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML)
+      end
+
+      def insert_signature(doc, signature_xml)
+        # Parse signature
+        signature_doc = Nokogiri::XML(signature_xml)
+        signature_element = signature_doc.root
+
+        # Find NFCom root element
+        nfcom_element = doc.at_xpath(
+          '//nfcom:NFCom',
+          'nfcom' => 'http://www.portalfiscal.inf.br/nfcom'
+        )
+
+        raise Errors::XmlError, 'NFCom element not found' unless nfcom_element
+
+        nfcom_element.add_child(signature_element)
       end
     end
   end

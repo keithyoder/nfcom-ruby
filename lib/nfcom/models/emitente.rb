@@ -15,7 +15,7 @@ module Nfcom
     #     inscricao_estadual: '0123456789',
     #     inscricao_municipal: '987654',
     #     cnae: '6190-6/01',
-    #     regime_tributario: 1,
+    #     regime_tributario: :simples_nacional,
     #     endereco: {
     #       logradouro: 'Av. Principal',
     #       numero: '1000',
@@ -38,14 +38,14 @@ module Nfcom
     # Atributos obrigatórios:
     # - cnpj (14 dígitos, com validação)
     # - razao_social (razão social da empresa)
-    #   - inscricao_estadual (IE do estado)
+    # - inscricao_estadual (IE do estado)
     # - endereco completo
     #
     # Atributos opcionais:
     # - nome_fantasia (nome de fantasia/comercial)
     # - inscricao_municipal (IM do município)
     # - cnae (classificação da atividade econômica)
-    # - regime_tributario (1=Simples Nacional, 3=Normal)
+    # - regime_tributario (1=Simples Nacional, 2=Simples Excesso, 3=Normal)
     #
     # Validações automáticas:
     # - Validação de dígitos verificadores do CNPJ
@@ -61,8 +61,17 @@ module Nfcom
       attr_accessor :cnpj, :razao_social, :nome_fantasia, :inscricao_estadual,
                     :inscricao_municipal, :cnae, :regime_tributario, :endereco
 
+      # Códigos de Regime Tributário (CRT)
+      REGIME_TRIBUTARIO = {
+        simples_nacional: 1,
+        simples_excesso: 2,
+        normal: 3
+      }.freeze
+
       def initialize(attributes = {})
         @endereco = Endereco.new
+        @regime_tributario = :normal # Padrão: Regime Normal
+
         attributes.each do |key, value|
           if key == :endereco && value.is_a?(Hash)
             @endereco = Endereco.new(value)
@@ -70,6 +79,12 @@ module Nfcom
             send("#{key}=", value)
           end
         end
+      end
+
+      # Retorna o código do regime tributário para o XML
+      # @return [Integer] Código do regime tributário (1, 2 ou 3)
+      def regime_tributario_codigo
+        REGIME_TRIBUTARIO[regime_tributario] || REGIME_TRIBUTARIO[:normal]
       end
 
       def valido?

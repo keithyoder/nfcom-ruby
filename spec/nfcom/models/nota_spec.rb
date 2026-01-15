@@ -3,6 +3,10 @@
 require 'spec_helper'
 
 RSpec.describe Nfcom::Models::Nota do
+  let(:classe_consumo_valida) do
+    Nfcom::Models::Item::CLASSES_CONSUMO.values.first
+  end
+
   describe '#initialize' do
     it 'creates a new nota with default values' do
       nota = described_class.new
@@ -10,6 +14,9 @@ RSpec.describe Nfcom::Models::Nota do
       expect(nota.serie).to eq(1)
       expect(nota.itens).to be_empty
       expect(nota.total).to be_a(Nfcom::Models::Total)
+      expect(nota.tipo_faturamento).to eq(
+        Nfcom::Models::Nota::TIPO_FATURAMENTO[:normal]
+      )
     end
   end
 
@@ -20,7 +27,7 @@ RSpec.describe Nfcom::Models::Nota do
       nota.add_item(
         codigo_servico: '0303',
         descricao: 'Plano Internet',
-        classe_consumo: '0303',
+        classe_consumo: classe_consumo_valida,
         cfop: '5307',
         valor_unitario: 99.90
       )
@@ -29,17 +36,42 @@ RSpec.describe Nfcom::Models::Nota do
       expect(nota.itens.first.descricao).to eq('Plano Internet')
     end
 
-    it 'sets the item number automatically' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 10)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 20)
+    it 'assigns numero_item sequentially' do
+      nota.add_item(
+        codigo_servico: '0303',
+        descricao: 'Item 1',
+        classe_consumo: classe_consumo_valida,
+        cfop: '5307',
+        valor_unitario: 10
+      )
 
-      expect(nota.itens[0].numero_item).to eq(1)
-      expect(nota.itens[1].numero_item).to eq(2)
+      nota.add_item(
+        codigo_servico: '0303',
+        descricao: 'Item 2',
+        classe_consumo: classe_consumo_valida,
+        cfop: '5307',
+        valor_unitario: 20
+      )
+
+      expect(nota.itens.map(&:numero_item)).to eq([1, 2])
     end
 
-    it 'recalculates totals after adding item' do
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 1', classe_consumo: '0303', cfop: '5307', valor_unitario: 50.00)
-      nota.add_item(codigo_servico: '0303', descricao: 'Item 2', classe_consumo: '0303', cfop: '5307', valor_unitario: 30.00)
+    it 'recalculates totals after adding items' do
+      nota.add_item(
+        codigo_servico: '0303',
+        descricao: 'Item 1',
+        classe_consumo: classe_consumo_valida,
+        cfop: '5307',
+        valor_unitario: 50.00
+      )
+
+      nota.add_item(
+        codigo_servico: '0303',
+        descricao: 'Item 2',
+        classe_consumo: classe_consumo_valida,
+        cfop: '5307',
+        valor_unitario: 30.00
+      )
 
       expect(nota.total.valor_servicos).to eq(80.00)
       expect(nota.total.valor_total).to eq(80.00)
@@ -47,36 +79,35 @@ RSpec.describe Nfcom::Models::Nota do
   end
 
   describe '#gerar_chave_acesso' do
-    let(:nota) do
-      described_class.new(
-        serie: 1,
-        numero: 1,
-        data_emissao: Time.new(2022, 12, 1)
-      )
-    end
-
     let(:emitente) do
       Nfcom::Models::Emitente.new(cnpj: '12345678000100')
     end
 
-    before do
-      Nfcom.configure do |config|
-        config.estado = 'PE'
-      end
-      nota.emitente = emitente
+    let(:nota) do
+      described_class.new(
+        serie: 1,
+        numero: 1,
+        data_emissao: Time.new(2022, 12, 1),
+        emitente: emitente,
+        tipo_emissao: :normal
+      )
     end
 
-    it 'generates a valid access key' do
+    before do
+      Nfcom.configure { |c| c.estado = 'PE' }
+    end
+
+    it 'generates a valid 44-digit access key' do
       nota.gerar_chave_acesso
 
       expect(nota.chave_acesso).to match(/\A\d{44}\z/)
-      expect(nota.chave_acesso[0..1]).to eq('26') # PE (UF)
-      expect(nota.chave_acesso[20..21]).to eq('62') # Modelo
+      expect(nota.chave_acesso[0..1]).to eq('26') # PE
+      expect(nota.chave_acesso[20..21]).to eq('62') # Modelo NFCom
     end
 
-    it 'generates different keys for different notas' do
-      nota1 = described_class.new(serie: 1, numero: 1, emitente: emitente)
-      nota2 = described_class.new(serie: 1, numero: 2, emitente: emitente)
+    it 'generates unique keys for different notas' do
+      nota1 = described_class.new(numero: 1, emitente: emitente)
+      nota2 = described_class.new(numero: 2, emitente: emitente)
 
       nota1.gerar_chave_acesso
       nota2.gerar_chave_acesso
@@ -87,6 +118,7 @@ RSpec.describe Nfcom::Models::Nota do
 
   describe '#valida?' do
     let(:nota) { described_class.new(serie: 1, numero: 1) }
+
     let(:emitente) do
       Nfcom::Models::Emitente.new(
         cnpj: '12345678000195',
@@ -103,9 +135,10 @@ RSpec.describe Nfcom::Models::Nota do
         }
       )
     end
+
     let(:destinatario) do
       Nfcom::Models::Destinatario.new(
-        cpf: '12345678909', # CPF válido para testes
+        cpf: '12345678909',
         razao_social: 'Cliente Teste',
         endereco: {
           logradouro: 'Av Teste',
@@ -119,26 +152,43 @@ RSpec.describe Nfcom::Models::Nota do
       )
     end
 
+    let(:fatura) do
+      Nfcom::Models::Fatura.new(
+        valor_liquido: 100.00,
+        data_vencimento: Date.today + 10
+      )
+    end
+
     context 'with valid data' do
       before do
         nota.emitente = emitente
         nota.destinatario = destinatario
+        nota.fatura = fatura
+        nota.tipo_faturamento = :normal
+
+        nota.fatura = Nfcom::Models::Fatura.new(
+          competencia: '202401',
+          codigo_barras: '83620000001599800186000000000000000000000000',
+          valor_fatura: 100.00,
+          data_vencimento: Date.today + 10
+        )
+
         nota.add_item(
           codigo_servico: '0303',
           descricao: 'Serviço',
-          classe_consumo: '0303',
+          classe_consumo: classe_consumo_valida,
           cfop: '5307',
           valor_unitario: 100
         )
       end
 
-      it 'returns true' do
+      it 'is valid' do
         expect(nota.valida?).to be true
       end
     end
 
     context 'without emitente' do
-      it 'returns false and has errors' do
+      it 'is invalid and reports error' do
         expect(nota.valida?).to be false
         expect(nota.erros).to include('Emitente é obrigatório')
       end
@@ -148,9 +198,10 @@ RSpec.describe Nfcom::Models::Nota do
       before do
         nota.emitente = emitente
         nota.destinatario = destinatario
+        nota.fatura = fatura
       end
 
-      it 'returns false and has errors' do
+      it 'is invalid and reports error' do
         expect(nota.valida?).to be false
         expect(nota.erros).to include('Deve haver pelo menos um item')
       end

@@ -15,6 +15,12 @@ module Nfcom
         datetime.strftime('%Y-%m-%dT%H:%M:%S%:z')
       end
 
+      # Formata data para padrão AAAA-MM-DD
+      def formatar_data(date)
+        date = date.to_date if date.respond_to?(:to_date)
+        date.strftime('%Y-%m-%d')
+      end
+
       # Remove caracteres não numéricos
       def apenas_numeros(texto)
         texto.to_s.gsub(/\D/, '')
