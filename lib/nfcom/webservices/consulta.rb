@@ -18,6 +18,7 @@ module Nfcom
         begin
           response = client.call(
             :nfcom_consulta_protocolo,
+            soap_action: 'http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta/nfcomConsultaNF',
             message: { 'nfcomDadosMsg' => message }
           )
 

@@ -4,10 +4,10 @@ require 'securerandom'
 
 module Nfcom
   module Models
-    # Representa uma Nota Fiscal de Comunicação (NF-COM) modelo 62
+    # Representa uma Nota Fiscal de ComunicaÃ§Ã£o (NF-COM) modelo 62
     #
-    # A Nota é o objeto principal da gem, agregando todas as informações
-    # necessárias para emissão: emitente, destinatário, itens/serviços e totalizadores.
+    # A Nota Ã© o objeto principal da gem, agregando todas as informaÃ§Ãµes
+    # necessÃ¡rias para emissÃ£o: emitente, destinatÃ¡rio, itens/serviÃ§os e totalizadores.
     #
     # @example Criar nota completa
     #   nota = Nfcom::Models::Nota.new do |n|
@@ -22,14 +22,14 @@ module Nfcom
     #       endereco: { ... }
     #     )
     #
-    #     # Destinatário (cliente)
+    #     # DestinatÃ¡rio (cliente)
     #     n.destinatario = Nfcom::Models::Destinatario.new(
     #       cpf: '12345678901',
-    #       razao_social: 'João da Silva',
+    #       razao_social: 'JoÃ£o da Silva',
     #       endereco: { ... }
     #     )
     #
-    #     # Adicionar serviços
+    #     # Adicionar serviÃ§os
     #     n.add_item(
     #       codigo_servico: '0303',
     #       descricao: 'Plano Fibra 100MB',
@@ -41,14 +41,14 @@ module Nfcom
     #
     # @example Validar nota antes de emitir
     #   if nota.valida?
-    #     puts "Nota válida, pronta para emissão"
+    #     puts "Nota vÃ¡lida, pronta para emissÃ£o"
     #   else
     #     puts "Erros encontrados:"
     #     nota.erros.each { |erro| puts "  - #{erro}" }
     #   end
     #
     # @example Emitir nota
-    #   # A chave de acesso é gerada automaticamente
+    #   # A chave de acesso Ã© gerada automaticamente
     #   nota.gerar_chave_acesso
     #
     #   # Enviar para SEFAZ
@@ -61,85 +61,152 @@ module Nfcom
     #     puts "Protocolo: #{nota.protocolo}"
     #   end
     #
-    # @example Adicionar múltiplos serviços
+    # @example Adicionar mÃºltiplos serviÃ§os
     #   nota.add_item(codigo_servico: '0303', descricao: 'Internet', valor_unitario: 99.90)
     #   nota.add_item(codigo_servico: '0304', descricao: 'TV', valor_unitario: 79.90)
-    #   # Total é recalculado automaticamente
+    #   # Total Ã© recalculado automaticamente
     #
-    # @example Nota com informações adicionais
+    # @example Nota com informaÃ§Ãµes adicionais
     #   nota.informacoes_adicionais = "Cliente isento de ICMS conforme decreto XYZ"
     #
-    # Tipos de Emissão:
-    # - :normal (1) - Emissão normal (padrão)
-    # - :contingencia (2) - Emissão em contingência (offline)
+    # Tipos de EmissÃ£o:
+    # - :normal (1) - EmissÃ£o normal (padrÃ£o)
+    # - :contingencia (2) - EmissÃ£o em contingÃªncia (offline)
     #
     # Finalidades:
-    # - :normal (1) - Nota fiscal normal (padrão)
+    # - :normal (1) - Nota fiscal normal (padrÃ£o)
     # - :complementar (2) - Nota complementar
     # - :ajuste (3) - Nota de ajuste
-    # - :devolucao (4) - Nota de devolução
+    # - :devolucao (4) - Nota de devoluÃ§Ã£o
     #
-    # Atributos obrigatórios:
-    # - serie (série da nota, padrão: 1)
-    # - numero (número sequencial da nota)
+    # Atributos obrigatÃ³rios:
+    # - serie (sÃ©rie da nota, padrÃ£o: 1)
+    # - numero (nÃºmero sequencial da nota)
     # - emitente (provedor/empresa)
-    # - destinatario (cliente/tomador do serviço)
-    # - itens (pelo menos um item/serviço)
+    # - destinatario (cliente/tomador do serviÃ§o)
+    # - itens (pelo menos um item/serviÃ§o)
     #
     # Atributos opcionais:
-    # - data_emissao (padrão: Time.now)
-    # - tipo_emissao (padrão: :normal)
-    # - finalidade (padrão: :normal)
-    # - informacoes_adicionais (texto livre até 5000 caracteres)
+    # - data_emissao (padrÃ£o: Time.now)
+    # - tipo_emissao (padrÃ£o: :normal)
+    # - finalidade (padrÃ£o: :normal)
+    # - informacoes_adicionais (texto livre atÃ© 5000 caracteres)
     #
-    # Atributos preenchidos após autorização:
-    # - chave_acesso (44 dígitos, gerada automaticamente)
-    # - codigo_verificacao (8 dígitos aleatórios)
-    # - protocolo (número do protocolo da SEFAZ)
-    # - data_autorizacao (data/hora da autorização)
+    # Atributos preenchidos apÃ³s autorizaÃ§Ã£o:
+    # - chave_acesso (44 dÃ­gitos, gerada automaticamente)
+    # - codigo_verificacao (8 dÃ­gitos aleatÃ³rios)
+    # - protocolo (nÃºmero do protocolo da SEFAZ)
+    # - data_autorizacao (data/hora da autorizaÃ§Ã£o)
     # - xml_autorizado (XML completo com assinatura e protocolo)
     #
-    # Funcionalidades automáticas:
-    # - Numeração sequencial de itens ao adicionar
-    # - Recálculo automático de totais ao adicionar/remover itens
-    # - Geração da chave de acesso (44 dígitos com DV)
-    # - Validação completa de todos os campos obrigatórios
-    # - Validação em cascata (emitente, destinatário, itens)
+    # Funcionalidades automÃ¡ticas:
+    # - NumeraÃ§Ã£o sequencial de itens ao adicionar
+    # - RecÃ¡lculo automÃ¡tico de totais ao adicionar/remover itens
+    # - GeraÃ§Ã£o da chave de acesso (44 dÃ­gitos com DV)
+    # - ValidaÃ§Ã£o completa de todos os campos obrigatÃ³rios
+    # - ValidaÃ§Ã£o em cascata (emitente, destinatÃ¡rio, itens)
     #
-    # Validações realizadas:
-    # - Presença de série, número, emitente e destinatário
+    # ValidaÃ§Ãµes realizadas:
+    # - PresenÃ§a de sÃ©rie, nÃºmero, emitente e destinatÃ¡rio
     # - Pelo menos um item na nota
-    # - Validação completa do emitente (CNPJ, IE, endereço)
-    # - Validação completa do destinatário (CPF/CNPJ, endereço)
-    # - Validação de cada item (código serviço, CFOP, valores)
+    # - ValidaÃ§Ã£o completa do emitente (CNPJ, IE, endereÃ§o)
+    # - ValidaÃ§Ã£o completa do destinatÃ¡rio (CPF/CNPJ, endereÃ§o)
+    # - ValidaÃ§Ã£o de cada item (cÃ³digo serviÃ§o, CFOP, valores)
     #
-    # @note A chave de acesso é gerada no formato:
-    #   UF (2) + AAMM (4) + CNPJ (14) + Modelo (2) + Série (3) +
-    #   Número (9) + Código Numérico (8) + DV (1) = 44 dígitos
+    # @note A chave de acesso Ã© gerada no formato:
+    #   UF (2) + AAMM (4) + CNPJ (14) + Modelo (2) + SÃ©rie (3) +
+    #   NÃºmero (9) + CÃ³digo NumÃ©rico (8) + DV (1) = 44 dÃ­gitos
     class Nota
-      attr_accessor :serie, :numero, :data_emissao, :tipo_emissao,
-                    :finalidade, :emitente, :destinatario, :itens, :total,
+      attr_accessor :serie, :numero, :data_emissao, :tipo_emissao, :fatura,
+                    :finalidade, :emitente, :destinatario, :assinante, :itens, :total,
                     :informacoes_adicionais, :chave_acesso, :codigo_verificacao,
-                    :protocolo, :data_autorizacao, :xml_autorizado
+                    :protocolo, :data_autorizacao, :xml_autorizado,
+                    :competencia_fatura, :data_vencimento, :valor_liquido_fatura
 
-      # Tipo de emissão
+      attr_reader :metodo_pagamento, :tipo_faturamento
+
+      def metodo_pagamento=(value)
+        if value.is_a?(Symbol)
+          unless METODOS_PAGAMENTO.key?(value)
+            raise Errors::ValidationError,
+                  "Método de pagamento inválido: #{value.inspect}. " \
+                  "Valores válidos: #{METODOS_PAGAMENTO.keys.join(', ')}"
+          end
+          @metodo_pagamento = METODOS_PAGAMENTO[value]
+        else
+          value_str = value.to_s
+          unless METODOS_PAGAMENTO.values.include?(value_str)
+            raise Errors::ValidationError,
+                  "Método de pagamento inválido: #{value.inspect}. " \
+                  "Valores válidos: #{METODOS_PAGAMENTO.values.join(', ')}"
+          end
+          @metodo_pagamento = value_str
+        end
+      end
+
+      def tipo_faturamento=(value)
+        if value.is_a?(Symbol)
+          unless TIPO_FATURAMENTO.key?(value)
+            raise Errors::ValidationError,
+                  "Tipo de faturamento inválido: #{value.inspect}. " \
+                  "Valores válidos: #{TIPO_FATURAMENTO.keys.join(', ')}"
+          end
+          @tipo_faturamento = TIPO_FATURAMENTO[value]
+        elsif value.is_a?(Integer) || value.is_a?(String)
+          value_int = value.to_i
+          unless TIPO_FATURAMENTO.values.include?(value_int)
+            raise Errors::ValidationError,
+                  "Tipo de faturamento inválido: #{value.inspect}. " \
+                  "Valores válidos: #{TIPO_FATURAMENTO.values.join(', ')}"
+          end
+          @tipo_faturamento = value_int
+        else
+          raise Errors::ValidationError,
+                'Tipo de faturamento deve ser Symbol, Integer ou String'
+        end
+      end
+
+      METODOS_PAGAMENTO = {
+        dinheiro: '01',
+        cheque: '02',
+        cartao_credito: '03',
+        cartao_debito: '04',
+        credito_loja: '05',
+        vale_alimentacao: '10',
+        vale_refeicao: '11',
+        vale_presente: '12',
+        vale_combustivel: '13',
+        boleto_bancario: '15',
+        deposito_bancario: '16',
+        pix: '17',
+        transferencia_bancaria: '18',
+        programa_fidelidade: '19',
+        sem_pagamento: '90',
+        outros: '99'
+      }.freeze
+
       TIPO_EMISSAO = {
         normal: 1,
         contingencia: 2
       }.freeze
 
-      # Finalidade
       FINALIDADE = {
-        normal: 1,
-        complementar: 2,
-        ajuste: 3,
-        devolucao: 4
+        normal: 0,
+        substituicao: 3,
+        ajuste: 4
+      }.freeze
+
+      TIPO_FATURAMENTO = {
+        normal: 0,
+        centralizado: 1,
+        cofaturamento: 2
       }.freeze
 
       def initialize(attributes = {})
         @serie = Nfcom.configuration.serie_padrao || 1
         @data_emissao = Time.now
         @tipo_emissao = :normal
+        send(:tipo_faturamento=, :normal)
         @finalidade = :normal
         @itens = []
         @total = Total.new
@@ -147,6 +214,8 @@ module Nfcom
         attributes.each do |key, value|
           if key == :emitente && value.is_a?(Hash)
             @emitente = Emitente.new(value)
+          elsif key == :fatura && value.is_a?(Hash)
+            @fatura = Fatura.new(value)
           elsif key == :destinatario && value.is_a?(Hash)
             @destinatario = Destinatario.new(value)
           elsif respond_to?("#{key}=")
@@ -178,9 +247,12 @@ module Nfcom
       end
 
       def gerar_chave_acesso
+        # IMPORTANTE: Discrepância no schema NFCom:
+        # - Campo cNF no XML: 7 dígitos (ER2)
+        # - cNF na chave de acesso: 8 dígitos (para chave ter 44 dígitos no total)
         # Formato da chave: UFAnoMesCNPJModSerieNumTpEmissCodNumDV
         # UF(2) + AAMM(4) + CNPJ(14) + Mod(2) + Serie(3) + Num(9) + TpEmiss(1) + CodNum(8) + DV(1) = 44
-        # Exemplo: 26 2212 12345678000100 62 001 000000001 1 12345678 9
+        # Exemplo: 26 2601 07159053000107 62 001 000009670 1 01234567 9
 
         config = Nfcom.configuration
         uf = config.codigo_uf
@@ -190,12 +262,19 @@ module Nfcom
         serie_fmt = serie.to_s.rjust(3, '0')
         numero_fmt = numero.to_s.rjust(9, '0')
         tipo_emiss = tipo_emissao_codigo.to_s
-        codigo_numerico = SecureRandom.random_number(100_000_000).to_s.rjust(8, '0')
 
-        chave_sem_dv = "#{uf}#{ano_mes}#{cnpj}#{modelo}#{serie_fmt}#{numero_fmt}#{tipo_emiss}#{codigo_numerico}"
+        # Gera cNF com 7 dígitos (para o campo XML)
+        codigo_numerico_7 = SecureRandom.random_number(10_000_000).to_s.rjust(7, '0')
+
+        # Mas na chave usa 8 dígitos (padding à esquerda com zero)
+        codigo_numerico_8 = codigo_numerico_7.rjust(8, '0')
+
+        chave_sem_dv = "#{uf}#{ano_mes}#{cnpj}#{modelo}#{serie_fmt}#{numero_fmt}#{tipo_emiss}#{codigo_numerico_8}"
         dv = calcular_digito_verificador(chave_sem_dv)
 
-        @codigo_verificacao = codigo_numerico
+        # Armazena o cNF de 7 dígitos (para o XML)
+        @codigo_verificacao = codigo_numerico_7
+        # Chave completa com 44 dígitos
         @chave_acesso = "#{chave_sem_dv}#{dv}"
       end
 
@@ -219,11 +298,32 @@ module Nfcom
         errors << 'Destinatário é obrigatório' if destinatario.nil?
         errors << 'Deve haver pelo menos um item' if itens.empty?
 
+        # Validações de schema (formato)
+        errors << 'Série inválida (deve ser 0-999)' if serie && !serie.to_s.match?(/\A(0|[1-9]{1}[0-9]{0,2})\z/)
+
+        if numero && !numero.to_s.match?(/\A[1-9]{1}[0-9]{0,8}\z/)
+          errors << 'Número inválido (1-999999999, não pode começar com zero)'
+        end
+
+        if codigo_verificacao && codigo_verificacao.to_s.length != 7
+          errors << "cNF inválido: deve ter exatamente 7 dígitos (campo XML), tem #{codigo_verificacao.to_s.length}"
+        end
+
+        if chave_acesso && !chave_acesso.to_s.match?(/\A[0-9]{44}\z/)
+          errors << "Chave de acesso inválida (deve ter 44 dígitos, tem #{chave_acesso.to_s.length})"
+        end
+
         errors.concat(emitente.erros.map { |e| "Emitente: #{e}" }) if emitente && !emitente.valido?
         errors.concat(destinatario.erros.map { |e| "Destinatário: #{e}" }) if destinatario && !destinatario.valido?
 
         itens.each_with_index do |item, i|
           errors.concat(item.erros.map { |e| "Item #{i + 1}: #{e}" }) unless item.valido?
+        end
+
+        if fatura.nil?
+          errors << 'Fatura é obrigatória'
+        elsif !fatura.valido?
+          errors.concat(fatura.erros.map { |e| "Fatura: #{e}" })
         end
 
         errors
@@ -236,7 +336,7 @@ module Nfcom
       private
 
       def calcular_digito_verificador(chave)
-        # Módulo 11
+        # MÃ³dulo 11
         multiplicadores = [2, 3, 4, 5, 6, 7, 8, 9]
         soma = 0
 

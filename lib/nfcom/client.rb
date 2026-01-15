@@ -35,7 +35,6 @@ module Nfcom
       begin
         ws = Webservices::Autorizacao.new(configuration)
         resposta = ws.enviar(xml_assinado)
-
         parser = Parsers::ResponseParser.new(resposta)
         resultado = parser.parse_autorizacao
 

@@ -27,6 +27,7 @@ module Nfcom
         begin
           response = client.call(
             :nfcom_inutilizacao,
+            soap_action: 'http://www.portalfiscal.inf.br/nfcom/wsdl/nfcomInutilizacao',
             message: { 'nfcomDadosMsg' => message }
           )
 

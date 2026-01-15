@@ -86,26 +86,22 @@ module Nfcom
       end
 
       def parse_autorizacao
-        # Códigos de status da SEFAZ
-        codigo = response.dig(:ret_env_nfcom, :c_stat)
-        motivo = response.dig(:ret_env_nfcom, :x_motivo)
+        c_stat = @response[:c_stat]
+        x_motivo = @response[:x_motivo]
 
-        case codigo.to_s
-        when '100' # Autorizada
-          {
-            autorizada: true,
-            codigo: codigo,
-            motivo: motivo,
-            protocolo: response.dig(:ret_env_nfcom, :prot_nfcom, :n_prot),
-            chave: response.dig(:ret_env_nfcom, :prot_nfcom, :ch_nfcom),
-            data_autorizacao: response.dig(:ret_env_nfcom, :prot_nfcom, :dh_rec_bto),
-            xml: response.dig(:ret_env_nfcom, :prot_nfcom, :xml)
-          }
-        when '110' # Denegada
-          raise Errors::NotaDenegada, "Nota denegada [#{codigo}]: #{motivo}"
-        else # Rejeitada
-          raise Errors::NotaRejeitada.new(codigo, motivo)
-        end
+        # Status 100 = Authorized
+        raise Errors::NotaRejeitada.new(c_stat, x_motivo) unless c_stat == '100'
+
+        {
+          autorizada: true,
+          protocolo: @response.dig(:prot_nfcom, :n_prot),
+          chave: @response.dig(:prot_nfcom, :ch_nfcom),
+          data_autorizacao: @response.dig(:prot_nfcom, :dh_rec_bto),
+          xml: @response.dig(:prot_nfcom, :xml),
+          mensagem: x_motivo
+        }
+
+        # Rejected or error
       end
 
       def parse_consulta

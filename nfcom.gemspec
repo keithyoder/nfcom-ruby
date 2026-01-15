@@ -35,5 +35,4 @@ Gem::Specification.new do |spec|
   # Dependencies
   spec.add_dependency 'httparty', '~> 0.21'
   spec.add_dependency 'nokogiri', '~> 1.15'
-  spec.add_dependency 'savon', '~> 2.14'
 end

@@ -6,14 +6,19 @@ require_relative 'nfcom/client'
 require_relative 'nfcom/errors'
 
 # Utils
+require_relative 'nfcom/utils/xml_cleaner'
 require_relative 'nfcom/utils/certificate'
+require_relative 'nfcom/utils/compressor'
 require_relative 'nfcom/utils/helpers'
+require_relative 'nfcom/utils/response_decompressor'
 
 # Models
 require_relative 'nfcom/models/nota'
 require_relative 'nfcom/models/emitente'
 require_relative 'nfcom/models/destinatario'
+require_relative 'nfcom/models/assinante'
 require_relative 'nfcom/models/item'
+require_relative 'nfcom/models/fatura'
 require_relative 'nfcom/models/total'
 require_relative 'nfcom/models/endereco'
 

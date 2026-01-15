@@ -32,9 +32,22 @@ module Nfcom
 
       def cnpj
         # Extrai CNPJ do subject do certificado
+        # Formato pode ser: CN=12345678000100 ou CN=EMPRESA:12345678000100
         subject = @cert.subject.to_s
-        match = subject.match(/CN=\d{14}/)
-        match ? match[0].gsub('CN=', '') : nil
+
+        # Tenta formato direto: CN=12345678000100
+        match = subject.match(/CN=(\d{14})/)
+        return match[1] if match
+
+        # Tenta formato com nome: CN=EMPRESA:12345678000100
+        match = subject.match(/CN=[^:]+:(\d{14})/)
+        return match[1] if match
+
+        # Tenta buscar CNPJ em qualquer lugar do subject
+        match = subject.match(/(\d{14})/)
+        return match[1] if match
+
+        nil
       end
 
       def to_pem
@@ -74,9 +87,19 @@ module Nfcom
       end
 
       def validar_certificado
-        raise Errors::CertificateError, 'Certificado não é válido' unless @cert.verify(@cert.public_key)
+        # Verifica se o certificado tem os componentes necessários
+        raise Errors::CertificateError, 'Certificado inválido: faltando certificado' if @cert.nil?
+        raise Errors::CertificateError, 'Certificado inválido: faltando chave privada' if @key.nil?
+
+        # Verifica se está expirado
         raise Errors::CertificateError, 'Certificado está expirado' if expirado?
 
+        # Verifica se a chave privada corresponde ao certificado
+        unless @cert.check_private_key(@key)
+          raise Errors::CertificateError, 'Chave privada não corresponde ao certificado'
+        end
+
+        # Aviso de vencimento próximo
         return unless dias_para_vencer <= 30
 
         warn "ATENÇÃO: Certificado vence em #{dias_para_vencer} dias!"
