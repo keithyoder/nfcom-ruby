@@ -84,117 +84,117 @@ module Nfcom
       rescue OpenSSL::SSL::SSLError => e
         raise Errors::SefazError, "Erro SSL: #{e.message}"
       end
-    end
 
-    def parse_response(soap_response)
-      ret_doc = decompress_response(soap_response)
+      def parse_response(soap_response)
+        ret_doc = decompress_response(soap_response)
 
-      log_decompressed_xml(ret_doc)
+        log_decompressed_xml(ret_doc)
 
-      extract_nfcom_result(ret_doc)
-    end
-
-    def build_http_client(url)
-      uri = URI.parse(url)
-      http = Net::HTTP.new(uri.host, uri.port)
-
-      http.use_ssl = (uri.scheme == 'https')
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      http.open_timeout = configuration.timeout
-      http.read_timeout = configuration.timeout
-
-      configure_certificate(http)
-
-      [http, uri]
-    end
-
-    def configure_certificate(http)
-      cert_pem = certificate.to_pem
-      http.cert = OpenSSL::X509::Certificate.new(cert_pem[:cert])
-      http.key = OpenSSL::PKey::RSA.new(cert_pem[:key])
-    end
-
-    def build_soap_request(uri, action, xml)
-      request = Net::HTTP::Post.new(uri.path.empty? ? '/' : uri.path)
-      request['Content-Type'] =
-        "application/soap+xml;charset=UTF-8;action=\"#{action}\""
-      request.body = xml
-      request
-    end
-
-    def validate_http_response!(response)
-      return if response.is_a?(Net::HTTPSuccess)
-
-      raise Errors::SefazError,
-            "Erro HTTP #{response.code}: #{response.message}"
-    end
-
-    def log_request(request)
-      return unless configuration.log_level == :debug
-
-      configuration.logger&.debug("SOAP Request:\n#{request.body}")
-    end
-
-    def log_response(response)
-      return unless configuration.log_level == :debug
-
-      body = response.body.force_encoding('UTF-8')
-      configuration.logger&.debug("SOAP Response (raw):\n#{body}")
-    end
-
-    def decompress_response(soap_response)
-      doc = Utils::ResponseDecompressor.extract_and_decompress(soap_response)
-      doc.remove_namespaces!
-      doc
-    end
-
-    def extract_nfcom_result(doc)
-      ret = doc.at_xpath('//retNFCom')
-      return log_missing_ret_nfcom(doc) unless ret
-
-      build_result(ret)
-    end
-
-    def build_result(ret)
-      result = {
-        c_stat: ret.at_xpath('.//cStat')&.text,
-        x_motivo: ret.at_xpath('.//xMotivo')&.text
-      }
-
-      if (prot = ret.at_xpath('.//protNFCom'))
-        result[:prot_nfcom] = extract_protocol(prot)
+        extract_nfcom_result(ret_doc)
       end
 
-      log_extracted_result(result)
-      result
-    end
+      def build_http_client(url)
+        uri = URI.parse(url)
+        http = Net::HTTP.new(uri.host, uri.port)
 
-    def extract_protocol(prot)
-      {
-        n_prot: prot.at_xpath('.//nProt')&.text,
-        ch_nfcom: prot.at_xpath('.//chNFCom')&.text,
-        dh_rec_bto: prot.at_xpath('.//dhRecbto')&.text,
-        xml: prot.to_xml
-      }
-    end
+        http.use_ssl = (uri.scheme == 'https')
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        http.open_timeout = configuration.timeout
+        http.read_timeout = configuration.timeout
 
-    def log_missing_ret_nfcom(doc)
-      configuration.logger&.warn(
-        "Resposta não contém retNFCom. XML: #{doc.to_xml}"
-      )
-      {}
-    end
+        configure_certificate(http)
 
-    def log_decompressed_xml(doc)
-      return unless configuration.log_level == :debug
+        [http, uri]
+      end
 
-      configuration.logger&.debug("XML da Resposta:\n#{doc.to_xml}")
-    end
+      def configure_certificate(http)
+        cert_pem = certificate.to_pem
+        http.cert = OpenSSL::X509::Certificate.new(cert_pem[:cert])
+        http.key = OpenSSL::PKey::RSA.new(cert_pem[:key])
+      end
 
-    def log_extracted_result(result)
-      return unless configuration.log_level == :debug
+      def build_soap_request(uri, action, xml)
+        request = Net::HTTP::Post.new(uri.path.empty? ? '/' : uri.path)
+        request['Content-Type'] =
+          "application/soap+xml;charset=UTF-8;action=\"#{action}\""
+        request.body = xml
+        request
+      end
 
-      configuration.logger&.debug("Resultado extraído: #{result.inspect}")
+      def validate_http_response!(response)
+        return if response.is_a?(Net::HTTPSuccess)
+
+        raise Errors::SefazError,
+              "Erro HTTP #{response.code}: #{response.message}"
+      end
+
+      def log_request(request)
+        return unless configuration.log_level == :debug
+
+        configuration.logger&.debug("SOAP Request:\n#{request.body}")
+      end
+
+      def log_response(response)
+        return unless configuration.log_level == :debug
+
+        body = response.body.force_encoding('UTF-8')
+        configuration.logger&.debug("SOAP Response (raw):\n#{body}")
+      end
+
+      def decompress_response(soap_response)
+        doc = Utils::ResponseDecompressor.extract_and_decompress(soap_response)
+        doc.remove_namespaces!
+        doc
+      end
+
+      def extract_nfcom_result(doc)
+        ret = doc.at_xpath('//retNFCom')
+        return log_missing_ret_nfcom(doc) unless ret
+
+        build_result(ret)
+      end
+
+      def build_result(ret)
+        result = {
+          c_stat: ret.at_xpath('.//cStat')&.text,
+          x_motivo: ret.at_xpath('.//xMotivo')&.text
+        }
+
+        if (prot = ret.at_xpath('.//protNFCom'))
+          result[:prot_nfcom] = extract_protocol(prot)
+        end
+
+        log_extracted_result(result)
+        result
+      end
+
+      def extract_protocol(prot)
+        {
+          n_prot: prot.at_xpath('.//nProt')&.text,
+          ch_nfcom: prot.at_xpath('.//chNFCom')&.text,
+          dh_rec_bto: prot.at_xpath('.//dhRecbto')&.text,
+          xml: prot.to_xml
+        }
+      end
+
+      def log_missing_ret_nfcom(doc)
+        configuration.logger&.warn(
+          "Resposta não contém retNFCom. XML: #{doc.to_xml}"
+        )
+        {}
+      end
+
+      def log_decompressed_xml(doc)
+        return unless configuration.log_level == :debug
+
+        configuration.logger&.debug("XML da Resposta:\n#{doc.to_xml}")
+      end
+
+      def log_extracted_result(result)
+        return unless configuration.log_level == :debug
+
+        configuration.logger&.debug("Resultado extraído: #{result.inspect}")
+      end
     end
   end
 end
