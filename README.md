@@ -51,7 +51,7 @@ Nfcom.configure do |config|
   config.cnpj = '12345678000100'
   config.razao_social = 'Minha Empresa LTDA'
   config.inscricao_estadual = '0123456789'
-  config.regime_tributario = 1  # 1=Simples Nacional, 3=Normal
+  config.regime_tributario = :simples_nacional
   
   # Configurações opcionais
   config.serie_padrao = 1
@@ -105,13 +105,21 @@ nota = Nfcom::Models::Nota.new do |n|
     }
   )
   
+  # Fatura
+  n.fatura = Nfcom::Models::Fatura.new(
+    competencia: '202601',                    # AAAAMM
+    data_vencimento: '2026-02-15',            # YYYY-MM-DD
+    codigo_barras: '23793381286000000099901234567890123456789012',
+    valor_fatura: 99.90
+  )
+  
   # Adicionar serviço (item)
   n.add_item(
-    codigo_servico: '0303',      # Internet
+    codigo_servico: '0303',                   # Internet
     descricao: 'Plano Fibra 100MB',
-    classe_consumo: '0303',
-    cfop: '5307',                # Prestação de serviço de comunicação
-    unidade: 'UN',
+    classe_consumo: :nao_medido_internet,     # Usar símbolo do enum
+    cfop: '5307',                             # Prestação de serviço de comunicação
+    unidade: :un,                             # Usar símbolo
     quantidade: 1,
     valor_unitario: 99.90
   )
@@ -123,15 +131,43 @@ resultado = client.autorizar(nota)
 
 if resultado[:autorizada]
   puts "✓ Nota autorizada!"
-  puts "Chave: #{resultado[:chave]}"
-  puts "Protocolo: #{resultado[:protocolo]}"
+  puts "Chave: #{nota.chave_acesso}"
+  puts "Protocolo: #{nota.protocolo}"
+  puts "Data: #{nota.data_autorizacao}"
   
-  # Salvar XML autorizado
-  File.write("nota_#{nota.numero}.xml", resultado[:xml])
+  # Salvar XML autorizado completo (nfcomProc)
+  # Este XML contém a NFCom assinada + protocolo de autorização
+  xml_completo = nota.xml_autorizado
+  File.write("nfcom_#{nota.numero}_#{nota.protocolo}.xml", xml_completo)
+  
+  # Ou salvar com formatação bonita
+  doc = Nokogiri::XML(xml_completo)
+  File.write("nfcom_#{nota.numero}.xml", doc.to_xml(indent: 2))
+  
+  puts "✓ XML salvo com sucesso"
 else
-  puts "✗ Erro: #{resultado[:motivo]}"
+  puts "✗ Erro na autorização"
+  puts "Código: #{resultado[:codigo]}"
+  puts "Motivo: #{resultado[:motivo]}"
 end
 ```
+
+### O que é armazenado após autorização
+
+Após a autorização bem-sucedida, o objeto `nota` é atualizado com:
+
+```ruby
+nota.chave_acesso        # "26260107159053000107620010000081661049503004"
+nota.protocolo           # "3262600000362421"
+nota.data_autorizacao    # "2026-01-16T06:29:46-03:00"
+nota.xml_autorizado      # XML completo (nfcomProc)
+```
+
+O `nota.xml_autorizado` contém o documento completo no formato `nfcomProc`:
+- A NFCom original assinada (`<NFCom>` com `<Signature>`)
+- O protocolo de autorização da SEFAZ (`<protNFCom>`)
+
+Este é o XML legalmente válido que deve ser armazenado e fornecido ao cliente.
 
 ### Consultando uma Nota
 
@@ -178,126 +214,6 @@ if resultado[:inutilizada]
 end
 ```
 
-## Integração com Rails
-
-### Service Object
-
-```ruby
-# app/services/nfcom_service.rb
-class NfcomService
-  def initialize(invoice)
-    @invoice = invoice
-  end
-  
-  def emitir
-    nota = build_nota
-    client = Nfcom::Client.new
-    
-    resultado = client.autorizar(nota)
-    
-    if resultado[:autorizada]
-      @invoice.update!(
-        nfcom_chave: resultado[:chave],
-        nfcom_numero: resultado[:numero],
-        nfcom_xml: resultado[:xml],
-        nfcom_protocolo: resultado[:protocolo],
-        nfcom_emitida_em: Time.current
-      )
-      
-      # Enviar email
-      NfcomMailer.enviar_nota(@invoice).deliver_later
-      
-      true
-    else
-      raise Nfcom::Errors::NotaRejeitada.new(
-        resultado[:codigo],
-        resultado[:motivo]
-      )
-    end
-  end
-  
-  private
-  
-  def build_nota
-    Nfcom::Models::Nota.new do |n|
-      n.serie = 1
-      n.numero = proximo_numero
-      n.emitente = build_emitente
-      n.destinatario = build_destinatario
-      
-      @invoice.items.each do |item|
-        n.add_item(
-          codigo_servico: '0303',
-          descricao: item.description,
-          classe_consumo: '0303',
-          cfop: '5307',
-          valor_unitario: item.amount
-        )
-      end
-    end
-  end
-  
-  def proximo_numero
-    # Lógica para obter próximo número sequencial
-  end
-end
-```
-
-### Background Job
-
-```ruby
-# app/jobs/emitir_nfcom_job.rb
-class EmitirNfcomJob < ApplicationJob
-  queue_as :nfcom
-  
-  def perform(invoice_id)
-    invoice = Invoice.find(invoice_id)
-    NfcomService.new(invoice).emitir
-  rescue Nfcom::Errors::NotaRejeitada => e
-    invoice.update!(
-      nfcom_erro: e.message,
-      nfcom_codigo_erro: e.codigo
-    )
-    raise e
-  end
-end
-
-# Uso
-EmitirNfcomJob.perform_later(invoice.id)
-```
-
-## Tratamento de Erros
-
-```ruby
-begin
-  client.autorizar(nota)
-rescue Nfcom::Errors::ValidationError => e
-  puts "Erro de validação: #{e.message}"
-rescue Nfcom::Errors::NotaRejeitada => e
-  puts "Nota rejeitada [#{e.codigo}]: #{e.motivo}"
-rescue Nfcom::Errors::SefazIndisponivel => e
-  puts "SEFAZ temporariamente indisponível"
-  # Tentar novamente mais tarde
-rescue Nfcom::Errors::CertificateError => e
-  puts "Erro no certificado: #{e.message}"
-rescue Nfcom::Errors::TimeoutError => e
-  puts "Timeout na comunicação"
-end
-```
-
-## Códigos de Serviço
-
-Para provedores de internet:
-
-- `0303` - Serviço de Internet
-- `0304` - TV por Assinatura
-- `0305` - Telefonia
-
-## CFOPs Comuns
-
-- `5307` - Prestação de serviço de comunicação (dentro do estado)
-- `6307` - Prestação de serviço de comunicação (fora do estado)
-
 ## Ambiente de Homologação
 
 Durante o desenvolvimento, sempre use o ambiente de homologação:
@@ -308,8 +224,6 @@ Nfcom.configure do |config|
   # ... outras configurações
 end
 ```
-
-**Importante:** Use CNPJs de teste no ambiente de homologação. Consulte a documentação da SEFAZ para a lista de CNPJs válidos para testes.
 
 ## Desenvolvimento
 
@@ -322,6 +236,9 @@ bundle exec rspec
 
 # Rodar linter
 bundle exec rubocop
+
+# Console interativo
+bundle exec irb -r ./lib/nfcom
 ```
 
 ## Contribuindo
@@ -338,16 +255,22 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 ## Suporte
 
-- GitHub Issues: https://github.com/keithyoder/nfcom/issues
+- GitHub Issues: https://github.com/keithyoder/nfcom-ruby/issues
 - Documentação SEFAZ: http://www.nfcom.fazenda.gov.br/
+- Manual NFCom: [Portal da Nota Fiscal](http://www.nfcom.fazenda.gov.br/)
 
 ## Roadmap
 
-- [ ] Suporte a mais estados
+- [x] Emissão de NFCom
+- [x] Assinatura digital
+- [x] Integração SEFAZ
+- [x] Consulta de notas
+- [x] Validações completas
+- [ ] Geração de DANFE-COM (PDF)
+- [ ] Suporte a mais estados (atualmente PE)
 - [ ] Contingência (FS-DA)
 - [ ] Cancelamento de notas
 - [ ] Carta de correção
-- [ ] Geração de DANFE-COM (PDF)
 - [ ] Validação contra schemas XSD
 - [ ] Cache de consultas
 - [ ] Webhook para eventos
@@ -355,7 +278,3 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 ## Autores
 
 - Keith Yoder - Desenvolvedor inicial
-
-## Agradecimentos
-
-Gem desenvolvida para facilitar a emissão de NF-COM por provedores de internet brasileiros.

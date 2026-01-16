@@ -34,14 +34,17 @@ module Nfcom
       tentativa = 0
       begin
         ws = Webservices::Autorizacao.new(configuration)
-        resposta = ws.enviar(xml_assinado)
-        parser = Parsers::ResponseParser.new(resposta)
-        resultado = parser.parse_autorizacao
+        resultado = ws.enviar(xml_assinado)
 
         if resultado[:autorizada]
           nota.protocolo = resultado[:protocolo]
           nota.data_autorizacao = resultado[:data_autorizacao]
-          nota.xml_autorizado = resultado[:xml]
+
+          # Constrói XML completo (nfcomProc) com NFCom assinada + protocolo
+          nota.xml_autorizado = Utils::XmlAuthorized.build_nfcom_proc(
+            xml_assinado: xml_assinado,
+            xml_protocolo: resultado[:xml]
+          )
         end
 
         resultado

@@ -11,6 +11,7 @@ require_relative 'nfcom/utils/certificate'
 require_relative 'nfcom/utils/compressor'
 require_relative 'nfcom/utils/helpers'
 require_relative 'nfcom/utils/response_decompressor'
+require_relative 'nfcom/utils/xml_authorized'
 
 # Models
 require_relative 'nfcom/models/nota'
