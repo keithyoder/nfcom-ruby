@@ -10,7 +10,7 @@ module Nfcom
     end
 
     # Autoriza uma nota fiscal
-    def autorizar(nota) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def autorizar(nota) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       validar_configuracao!
 
       raise Errors::ValidationError, nota.erros.join(', ') unless nota.valida?
@@ -52,7 +52,7 @@ module Nfcom
           c_stat: nota_status,
           x_motivo: motivo,
           autorizada: nota_autorizada,
-          prot_nfcom: prot ? prot.to_xml : nil
+          prot_nfcom: prot&.to_xml
         }
       rescue Errors::SefazIndisponivel => e
         tentativa += 1
