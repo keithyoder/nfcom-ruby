@@ -34,7 +34,9 @@ module Nfcom
       tentativa = 0
       begin
         ws = Webservices::Autorizacao.new(configuration)
-        resultado = ws.enviar(xml_assinado)
+        resposta = ws.enviar(xml_assinado)
+        parser = Parsers::ResponseParser.new(resposta)
+        resultado = parser.parse_autorizacao
 
         if resultado[:autorizada]
           nota.protocolo = resultado[:protocolo]
