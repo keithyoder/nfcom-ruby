@@ -24,6 +24,10 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
   let(:xml_assinado)   { '<xml>assinado</xml>' }
   let(:http)           { instance_double(Net::HTTP) }
 
+  let(:soap_response_xml) do
+    File.read(File.join(__dir__, '../../fixtures/responses/nfcom_100.xml'))
+  end
+
   before do
     stub_certificate
     stub_xml_processing
@@ -56,27 +60,7 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
       end
 
       it 'returns the full SOAP response as a Nokogiri::XML::Document' do
-        response_body = <<~XML
-          <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-            <soap:Body>
-              <nfcomResultMsg xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComRecepcao">
-                <retNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
-                  <cStat>100</cStat>
-                  <xMotivo>Autorizado</xMotivo>
-                  <protNFCom versao="1.00">
-                    <infProt>
-                      <nProt>123456</nProt>
-                      <chNFCom>26260107159053000107620010000000000000000</chNFCom>
-                      <dhRecbto>2026-01-16T09:00:00-03:00</dhRecbto>
-                    </infProt>
-                  </protNFCom>
-                </retNFCom>
-              </nfcomResultMsg>
-            </soap:Body>
-          </soap:Envelope>
-        XML
-
-        http_response = http_success(body: response_body)
+        http_response = http_success(body: soap_response_xml)
         allow(http).to receive(:request).and_return(http_response)
 
         result = service.enviar(xml_assinado)
