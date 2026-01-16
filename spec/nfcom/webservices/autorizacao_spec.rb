@@ -22,8 +22,7 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
 
   let(:webservice_url) { 'https://sefaz.sp.gov.br/nfcom' }
   let(:xml_assinado)   { '<xml>assinado</xml>' }
-
-  let(:http) { instance_double(Net::HTTP) }
+  let(:http)           { instance_double(Net::HTTP) }
 
   before do
     stub_certificate
@@ -33,32 +32,61 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
 
   describe '#enviar' do
     context 'when configuration is valid' do
-      let(:decompressed_response_xml) do
+      let(:soap_response_body) do
         <<~XML
-          <retNFCom>
-            <cStat>100</cStat>
-            <xMotivo>Autorizado</xMotivo>
-          </retNFCom>
+          <?xml version="1.0" encoding="utf-8"?>
+          <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+            <soap:Body>
+              <nfcomResultMsg xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComRecepcao">
+                <retNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
+                  <cStat>100</cStat>
+                  <xMotivo>Autorizado</xMotivo>
+                  <protNFCom versao="1.00">
+                    <infProt>
+                      <nProt>123456</nProt>
+                      <chNFCom>26260107159053000107620010000000000000000</chNFCom>
+                      <dhRecbto>2026-01-16T09:00:00-03:00</dhRecbto>
+                    </infProt>
+                  </protNFCom>
+                </retNFCom>
+              </nfcomResultMsg>
+            </soap:Body>
+          </soap:Envelope>
         XML
       end
 
-      it 'returns the parsed SEFAZ response' do
-        response = http_success(body: '<soap/>')
+      it 'returns the full SOAP response as a Nokogiri::XML::Document' do
+        response_body = <<~XML
+          <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+            <soap:Body>
+              <nfcomResultMsg xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComRecepcao">
+                <retNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
+                  <cStat>100</cStat>
+                  <xMotivo>Autorizado</xMotivo>
+                  <protNFCom versao="1.00">
+                    <infProt>
+                      <nProt>123456</nProt>
+                      <chNFCom>26260107159053000107620010000000000000000</chNFCom>
+                      <dhRecbto>2026-01-16T09:00:00-03:00</dhRecbto>
+                    </infProt>
+                  </protNFCom>
+                </retNFCom>
+              </nfcomResultMsg>
+            </soap:Body>
+          </soap:Envelope>
+        XML
 
-        allow(http).to receive(:request).and_return(response)
-
-        allow(Nfcom::Utils::ResponseDecompressor)
-          .to receive(:extract_and_decompress)
-          .and_return(Nokogiri::XML(decompressed_response_xml))
+        http_response = http_success(body: response_body)
+        allow(http).to receive(:request).and_return(http_response)
 
         result = service.enviar(xml_assinado)
+        ns = { nfcom: 'http://www.portalfiscal.inf.br/nfcom' }
 
+        expect(result).to be_a(Nokogiri::XML::Document)
+        expect(result.at_xpath('//nfcom:cStat', ns).text).to eq('100')
+        expect(result.at_xpath('//nfcom:xMotivo', ns).text).to eq('Autorizado')
+        expect(result.at_xpath('//nfcom:protNFCom', ns)).not_to be_nil
         expect(http).to have_received(:request).once
-
-        expect(result).to eq(
-          c_stat: '100',
-          x_motivo: 'Autorizado'
-        )
       end
     end
 
@@ -76,10 +104,7 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
         allow(http).to receive(:request).and_raise(Net::ReadTimeout)
 
         expect { service.enviar(xml_assinado) }
-          .to raise_error(
-            Nfcom::Errors::TimeoutError,
-            /Timeout na comunicação/
-          )
+          .to raise_error(Nfcom::Errors::TimeoutError, /Timeout na comunicação/)
       end
     end
 
@@ -90,14 +115,10 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
           code: '500',
           message: 'Internal Server Error'
         )
-
         allow(http).to receive(:request).and_return(response)
 
         expect { service.enviar(xml_assinado) }
-          .to raise_error(
-            Nfcom::Errors::SefazError,
-            /Erro HTTP 500/
-          )
+          .to raise_error(Nfcom::Errors::SefazError, /Erro HTTP 500/)
       end
     end
   end
@@ -109,39 +130,22 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
   def stub_certificate
     fake_cert = instance_double(OpenSSL::X509::Certificate)
     fake_key  = instance_double(OpenSSL::PKey::RSA)
-
     allow(OpenSSL::X509::Certificate).to receive(:new).and_return(fake_cert)
     allow(OpenSSL::PKey::RSA).to receive(:new).and_return(fake_key)
 
     allow(Nfcom::Utils::Certificate).to receive(:new).and_return(
-      instance_double(
-        Nfcom::Utils::Certificate,
-        to_pem: { cert: 'CERT', key: 'KEY' }
-      )
+      instance_double(Nfcom::Utils::Certificate, to_pem: { cert: 'CERT', key: 'KEY' })
     )
   end
 
   def stub_xml_processing
-    allow(Nfcom::Utils::XmlCleaner)
-      .to receive(:clean)
-      .and_return('<xml>limpo</xml>')
-
-    allow(Nfcom::Utils::Compressor)
-      .to receive(:gzip_base64)
-      .and_return('XML_GZIP')
+    allow(Nfcom::Utils::XmlCleaner).to receive(:clean).and_return('<xml>limpo</xml>')
+    allow(Nfcom::Utils::Compressor).to receive(:gzip_base64).and_return('XML_GZIP')
   end
 
   def stub_http_client
     allow(Net::HTTP).to receive(:new).and_return(http)
-
-    %i[
-      use_ssl=
-      verify_mode=
-      open_timeout=
-      read_timeout=
-      cert=
-      key=
-    ].each do |method|
+    %i[use_ssl= verify_mode= open_timeout= read_timeout= cert= key=].each do |method|
       allow(http).to receive(method)
     end
   end
