@@ -79,12 +79,25 @@ module Nfcom
     # @note Este parser é usado internamente pelo Client, você normalmente
     #   não precisa instanciá-lo diretamente.
     class ResponseParser
-      attr_reader :response
+      class NotaRejeitada < StandardError
+        attr_reader :codigo, :motivo
 
-      def initialize(response)
-        @response = response
+        def initialize(codigo, motivo)
+          @codigo = codigo
+          @motivo = motivo
+          super("#{codigo}: #{motivo}")
+        end
+      end
+      attr_reader :http_response, :document
+
+      def initialize(http_response)
+        @http_response = http_response
+
+        # Convert HTTP response body to Nokogiri document
+        @document = Nokogiri::XML(http_response.body)
       end
 
+      # Processa resposta de autorização
       def parse_autorizacao
         c_stat = @response[:c_stat]
         x_motivo = @response[:x_motivo]
@@ -156,6 +169,61 @@ module Nfcom
         else
           'Desconhecida'
         end
+      end
+
+      # Namespaces XML padrão para NFCom
+      def nfcom_namespaces
+        {
+          'soap' => 'http://www.w3.org/2003/05/soap-envelope',
+          'nfcom' => 'http://www.portalfiscal.inf.br/nfcom'
+        }
+      end
+
+      # Extrai o elemento retNFCom do documento
+      def extract_ret_nfcom
+        document.at_xpath('//nfcom:retNFCom', nfcom_namespaces)
+      end
+
+      # Valida se a resposta contém o elemento esperado
+      def validate_response!(ret)
+        raise NotaRejeitada.new('000', 'Resposta inválida') unless ret
+      end
+
+      # Extrai código de status e motivo
+      def extract_status(ret)
+        c_stat = ret.at_xpath('.//nfcom:cStat', nfcom_namespaces)&.text
+        x_motivo = ret.at_xpath('.//nfcom:xMotivo', nfcom_namespaces)&.text
+        [c_stat, x_motivo]
+      end
+
+      # Extrai dados do protocolo de autorização
+      def extract_protocol(ret)
+        prot = ret.at_xpath('.//nfcom:protNFCom', nfcom_namespaces)
+        return nil unless prot
+
+        {
+          n_prot: prot.at_xpath('.//nfcom:nProt', nfcom_namespaces)&.text,
+          ch_nfcom: prot.at_xpath('.//nfcom:chNFCom', nfcom_namespaces)&.text,
+          dh_rec_bto: prot.at_xpath('.//nfcom:dhRecbto', nfcom_namespaces)&.text,
+          xml: prot.to_xml
+        }
+      end
+
+      # Valida se a nota foi autorizada
+      def validate_authorization!(c_stat, x_motivo)
+        raise NotaRejeitada.new(c_stat, x_motivo) unless c_stat == '100'
+      end
+
+      # Constrói hash de resposta de sucesso
+      def build_success_response(prot_hash, x_motivo)
+        {
+          autorizada: true,
+          protocolo: prot_hash&.dig(:n_prot),
+          chave: prot_hash&.dig(:ch_nfcom),
+          data_autorizacao: prot_hash&.dig(:dh_rec_bto),
+          xml: prot_hash&.dig(:xml),
+          mensagem: x_motivo
+        }
       end
     end
   end

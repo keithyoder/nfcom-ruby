@@ -10,10 +10,46 @@
 /test/version_tmp/
 /tmp/
 
-# Used by dotenv library to load environment variables.
-# .env
+# macOS
+.DS_Store
 
-# Ignore Byebug command history file.
+# RSpec
+.rspec_status
+
+# Digital Certificates & Private Keys
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+certificates/
+certs/
+
+# Environment & Configuration Files
+.env
+.env.local
+.env.*.local
+config/credentials.yml
+config/secrets.yml
+
+# Log Files
+*.log
+log/*.log
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Byebug command history
 .byebug_history
 
 ## Specific to RubyMotion:
