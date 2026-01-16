@@ -49,7 +49,7 @@ module Nfcom
     # Métodos de parsing:
     #
     # - parse_autorizacao - Processa resposta de autorização de nota
-    #   Retorna: { autorizada, codigo, motivo, protocolo, chave, data_autorizacao, xml }
+    #   Retorna: { autorizada, protocolo, chave, data_autorizacao, xml, mensagem }
     #   Códigos: '100' = Autorizada, '110' = Denegada, outros = Rejeitada
     #
     # - parse_consulta - Processa resposta de consulta de nota
@@ -99,22 +99,15 @@ module Nfcom
 
       # Processa resposta de autorização
       def parse_autorizacao
-        c_stat = @response[:c_stat]
-        x_motivo = @response[:x_motivo]
+        ret = extract_ret_nfcom
+        validate_response!(ret)
 
-        # Status 100 = Authorized
-        raise Errors::NotaRejeitada.new(c_stat, x_motivo) unless c_stat == '100'
+        c_stat, x_motivo = extract_status(ret)
+        prot_hash = extract_protocol(ret)
 
-        {
-          autorizada: true,
-          protocolo: @response.dig(:prot_nfcom, :n_prot),
-          chave: @response.dig(:prot_nfcom, :ch_nfcom),
-          data_autorizacao: @response.dig(:prot_nfcom, :dh_rec_bto),
-          xml: @response.dig(:prot_nfcom, :xml),
-          mensagem: x_motivo
-        }
+        validate_authorization!(c_stat, x_motivo)
 
-        # Rejected or error
+        build_success_response(prot_hash, x_motivo)
       end
 
       def parse_consulta

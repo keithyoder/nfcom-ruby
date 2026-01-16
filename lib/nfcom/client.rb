@@ -26,30 +26,34 @@ module Nfcom
       signature = Builder::Signature.new(configuration)
       xml_assinado = signature.assinar(xml)
 
-      # Valida XML
-      validator = Validators::XmlValidator.new
-      validator.validar(xml_assinado)
-
-      # Envia para SEFAZ com retry
       tentativa = 0
       begin
         ws = Webservices::Autorizacao.new(configuration)
-        resposta = ws.enviar(xml_assinado)
-        parser = Parsers::ResponseParser.new(resposta)
-        resultado = parser.parse_autorizacao
+        doc = ws.enviar(xml_assinado)
+        doc.remove_namespaces!
+        ret = doc.at_xpath('//retNFCom')
+        raise Errors::SefazError, "Resposta SEFAZ não contém retNFCom. XML: #{doc.to_xml}" unless ret
 
-        if resultado[:autorizada]
-          nota.protocolo = resultado[:protocolo]
-          nota.data_autorizacao = resultado[:data_autorizacao]
+        nota_status = ret.at_xpath('.//cStat')&.text
+        motivo = ret.at_xpath('.//xMotivo')&.text
+        nota_autorizada = nota_status == '100'
 
-          # Constrói XML completo (nfcomProc) com NFCom assinada + protocolo
+        if (prot = ret.at_xpath('.//protNFCom'))
+          inf_prot = prot.at_xpath('.//infProt')
+          nota.protocolo = inf_prot.at_xpath('.//nProt')&.text
+          nota.data_autorizacao = inf_prot.at_xpath('.//dhRecbto')&.text
           nota.xml_autorizado = Utils::XmlAuthorized.build_nfcom_proc(
             xml_assinado: xml_assinado,
-            xml_protocolo: resultado[:xml]
+            xml_protocolo: prot.to_xml
           )
         end
 
-        resultado
+        {
+          c_stat: nota_status,
+          x_motivo: motivo,
+          autorizada: nota_autorizada,
+          prot_nfcom: prot ? prot.to_xml : nil
+        }
       rescue Errors::SefazIndisponivel => e
         tentativa += 1
         raise e unless tentativa < configuration.max_tentativas
