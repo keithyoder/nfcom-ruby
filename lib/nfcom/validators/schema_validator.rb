@@ -76,7 +76,7 @@ module Nfcom
         er44: /\A(0|[1-9]{1}[0-9]{0,2})\z/,
 
         # ER47 - Texto geral (1-infinito caracteres, não pode ter apenas espaços)
-        er47: /\A[!-ÿ]{1}[ -ÿ]{0,}[!-ÿ]{1}|[!-ÿ]{1}\z/,
+        er47: /\A[^\r\n\t]*[!-ÿ][^\r\n\t]*\z/,
 
         # ER48 - Data AAAA-MM-DD
         er48: /

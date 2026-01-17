@@ -316,8 +316,12 @@ module Nfcom
 
       # Gera informações adicionais (tag infAdic)
       def gerar_info_adicional(xml)
+        return unless nota.informacoes_adicionais&.any?
+
         xml.infAdic do
-          xml.infCpl limitar_texto(nota.informacoes_adicionais, 5000)
+          nota.informacoes_adicionais.each do |texto|
+            xml.infCpl texto
+          end
         end
       end
 

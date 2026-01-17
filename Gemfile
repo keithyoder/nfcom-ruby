@@ -13,3 +13,7 @@ gem 'rubocop', '~> 1.50'
 gem 'rubocop-rspec', '~> 3.0', require: false
 gem 'vcr', '~> 6.1'
 gem 'webmock', '~> 3.18'
+
+group :test do
+  gem 'simplecov', require: false
+end
