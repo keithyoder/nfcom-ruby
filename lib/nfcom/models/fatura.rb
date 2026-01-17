@@ -39,6 +39,8 @@ module Nfcom
     # - codigo_banco (número do banco - se houver débito automático)
     # - codigo_agencia (número da agência - se houver débito automático)
     class Fatura
+      include Utils::Helpers
+
       attr_accessor :data_vencimento,              # dVencFat - YYYY-MM-DD
                     :codigo_barras,                # codBarras - OBRIGATÓRIO
                     :valor_fatura,                 # vFat - Valor total
@@ -110,12 +112,13 @@ module Nfcom
 
         # Validar períodos de uso (se informados)
         if periodo_uso_inicio && periodo_uso_fim
-          begin
-            if Date.parse(periodo_uso_inicio) > Date.parse(periodo_uso_fim)
-              errors << 'Período de uso: data inicial não pode ser posterior à data final'
-            end
-          rescue ArgumentError
+          inicio = safe_to_date(periodo_uso_inicio)
+          fim = safe_to_date(periodo_uso_fim)
+
+          if inicio.nil? || fim.nil?
             errors << 'Período de uso: datas inválidas'
+          elsif inicio > fim
+            errors << 'Período de uso: data inicial não pode ser posterior à data final'
           end
         elsif periodo_uso_inicio || periodo_uso_fim
           errors << 'Período de uso: ambas as datas (início e fim) devem ser informadas'
@@ -146,7 +149,10 @@ module Nfcom
       def data_vencimento_valida?
         return false unless data_vencimento
 
-        # Formato: YYYY-MM-DD
+        # Se já é um Date, valida diretamente
+        return true if data_vencimento.is_a?(Date)
+
+        # Se é String, valida formato YYYY-MM-DD
         return false unless data_vencimento.to_s.match?(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/)
 
         # Tentar fazer parse para validar se é uma data real

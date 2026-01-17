@@ -28,7 +28,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       )
     end
 
-    context 'quando a nota é válida' do # rubocop:disable RSpec/ContextWording
+    context 'quando a nota é válida' do
       before do
         nota.itens << item_valido
       end
@@ -39,7 +39,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com validação de valor total' do # rubocop:disable RSpec/ContextWording
+    context 'com validação de valor total' do
       it 'retorna erro quando valor total é zero' do
         nota.total.valor_total = 0.00
         nota.itens << item_valido
@@ -65,7 +65,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com validação de soma dos itens' do # rubocop:disable RSpec/ContextWording
+    context 'com validação de soma dos itens' do
       it 'retorna erro quando soma dos itens não confere com total' do
         nota.total.valor_servicos = 100.00
         nota.itens << item_valido.dup.tap { |i| i.valor_total = 50.00 }
@@ -121,7 +121,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com validação de código de serviço' do # rubocop:disable RSpec/ContextWording
+    context 'com validação de código de serviço' do
       it 'aceita código 0303 (Internet)' do
         item = item_valido.dup
         item.codigo_servico = '0303'
@@ -205,7 +205,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com validação de CFOP' do # rubocop:disable RSpec/ContextWording
+    context 'com validação de CFOP' do
       describe 'CFOPs válidos dentro do estado (5300-5399)' do
         it 'aceita CFOP 5300' do
           item = item_valido.dup
@@ -362,7 +362,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com validações combinadas' do # rubocop:disable RSpec/ContextWording
+    context 'com validações combinadas' do
       it 'retorna múltiplos erros quando há várias violações' do
         nota.total.valor_total = 0.00
         nota.total.valor_servicos = 100.00
@@ -431,7 +431,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
   end
 
   describe '.cfop_valido?' do
-    context 'com CFOPs dentro do estado (5300-5399)' do # rubocop:disable RSpec/ContextWording
+    context 'com CFOPs dentro do estado (5300-5399)' do
       it 'retorna true para 5300' do
         expect(described_class.cfop_valido?('5300')).to be true
       end
@@ -445,7 +445,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com CFOPs fora do estado (6300-6399)' do # rubocop:disable RSpec/ContextWording
+    context 'com CFOPs fora do estado (6300-6399)' do
       it 'retorna true para 6300' do
         expect(described_class.cfop_valido?('6300')).to be true
       end
@@ -459,7 +459,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com CFOPs inválidos' do # rubocop:disable RSpec/ContextWording
+    context 'com CFOPs inválidos' do
       it 'retorna false para 5299' do
         expect(described_class.cfop_valido?('5299')).to be false
       end
@@ -489,7 +489,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
       end
     end
 
-    context 'com conversão de tipos' do # rubocop:disable RSpec/ContextWording
+    context 'com conversão de tipos' do
       it 'aceita CFOP como integer' do
         expect(described_class.cfop_valido?(5307)).to be true
       end

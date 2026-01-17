@@ -8,7 +8,7 @@ RSpec.describe Nfcom::Models::Nota do
   end
 
   describe '#initialize' do
-    it 'creates a new nota with default values' do
+    it 'cria uma nova nota com valores padrão' do
       nota = described_class.new
 
       expect(nota.serie).to eq(1)
@@ -23,7 +23,7 @@ RSpec.describe Nfcom::Models::Nota do
   describe '#add_item' do
     let(:nota) { described_class.new }
 
-    it 'adds an item to the nota' do
+    it 'adiciona um item à nota' do
       nota.add_item(
         codigo_servico: '0303',
         descricao: 'Plano Internet',
@@ -36,7 +36,7 @@ RSpec.describe Nfcom::Models::Nota do
       expect(nota.itens.first.descricao).to eq('Plano Internet')
     end
 
-    it 'assigns numero_item sequentially' do
+    it 'atribui numero_item sequencialmente' do
       nota.add_item(
         codigo_servico: '0303',
         descricao: 'Item 1',
@@ -56,7 +56,7 @@ RSpec.describe Nfcom::Models::Nota do
       expect(nota.itens.map(&:numero_item)).to eq([1, 2])
     end
 
-    it 'recalculates totals after adding items' do
+    it 'recalcula totais após adicionar itens' do
       nota.add_item(
         codigo_servico: '0303',
         descricao: 'Item 1',
@@ -97,7 +97,7 @@ RSpec.describe Nfcom::Models::Nota do
       Nfcom.configure { |c| c.estado = 'PE' }
     end
 
-    it 'generates a valid 44-digit access key' do
+    it 'gera uma chave de acesso válida com 44 dígitos' do
       nota.gerar_chave_acesso
 
       expect(nota.chave_acesso).to match(/\A\d{44}\z/)
@@ -105,7 +105,7 @@ RSpec.describe Nfcom::Models::Nota do
       expect(nota.chave_acesso[20..21]).to eq('62') # Modelo NFCom
     end
 
-    it 'generates unique keys for different notas' do
+    it 'gera chaves únicas para diferentes notas' do
       nota1 = described_class.new(numero: 1, emitente: emitente)
       nota2 = described_class.new(numero: 2, emitente: emitente)
 
@@ -159,7 +159,7 @@ RSpec.describe Nfcom::Models::Nota do
       )
     end
 
-    context 'with valid data' do
+    context 'com dados válidos' do
       before do
         nota.emitente = emitente
         nota.destinatario = destinatario
@@ -182,26 +182,26 @@ RSpec.describe Nfcom::Models::Nota do
         )
       end
 
-      it 'is valid' do
+      it 'é válida' do
         expect(nota.valida?).to be true
       end
     end
 
-    context 'without emitente' do
-      it 'is invalid and reports error' do
+    context 'sem emitente' do
+      it 'é inválida e reporta erro' do
         expect(nota.valida?).to be false
         expect(nota.erros).to include('Emitente é obrigatório')
       end
     end
 
-    context 'without items' do
+    context 'sem itens' do
       before do
         nota.emitente = emitente
         nota.destinatario = destinatario
         nota.fatura = fatura
       end
 
-      it 'is invalid and reports error' do
+      it 'é inválida e reporta erro' do
         expect(nota.valida?).to be false
         expect(nota.erros).to include('Deve haver pelo menos um item')
       end

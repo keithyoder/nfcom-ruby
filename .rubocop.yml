@@ -101,3 +101,15 @@ RSpec/NestedGroups:
 
 RSpec/MultipleMemoizedHelpers:
   Max: 10
+
+# Suporte para contextos em português
+RSpec/ContextWording:
+  Prefixes:
+    - when
+    - with
+    - without
+    - com      # "com" = "with" em português
+    - quando   # "quando" = "when" em português
+    - sem      # "sem" = "without" em português
+    - para     # "para" = "for" em português
+    - dado     # "dado" = "given" em português
