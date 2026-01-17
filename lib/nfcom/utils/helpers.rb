@@ -10,18 +10,33 @@ module Nfcom
         format("%.#{casas}f", valor.to_f)
       end
 
-      # Formata data/hora para padrão ISO 8601
+      # Converte String ou Date para Date de forma segura (sem depender do Rails)
+      # @param value [String, Date, Time, DateTime, nil]
+      # @return [Date, nil]
+      def safe_to_date(value)
+        return nil if value.nil?
+        return value if value.is_a?(Date)
+        return value.to_date if value.respond_to?(:to_date) && !value.is_a?(String)
+
+        Date.parse(value.to_s)
+      rescue ArgumentError
+        nil
+      end
+
+      # Formata data/hora para padrÃ£o ISO 8601
       def formatar_data_hora(datetime)
         datetime.strftime('%Y-%m-%dT%H:%M:%S%:z')
       end
 
       # Formata data para padrão AAAA-MM-DD
       def formatar_data(date)
-        date = date.to_date if date.respond_to?(:to_date)
+        date = safe_to_date(date)
+        return nil unless date
+
         date.strftime('%Y-%m-%d')
       end
 
-      # Remove caracteres não numéricos
+      # Remove caracteres nÃ£o numÃ©ricos
       def apenas_numeros(texto)
         texto.to_s.gsub(/\D/, '')
       end
