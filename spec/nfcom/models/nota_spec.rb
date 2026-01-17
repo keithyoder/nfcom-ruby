@@ -207,4 +207,24 @@ RSpec.describe Nfcom::Models::Nota do
       end
     end
   end
+
+  describe 'informacoes_adicionais' do
+    let(:nota) { described_class.new }
+
+    it 'splits informacoes_adicionais on line breaks into an array' do
+      nota.informacoes_adicionais = "Linha 1\nLinha 2\nLinha 3"
+
+      expect(nota.informacoes_adicionais).to eq(
+        ['Linha 1', 'Linha 2', 'Linha 3']
+      )
+    end
+
+    it 'removes empty lines and trims whitespace' do
+      nota.informacoes_adicionais = " Linha 1 \n\n Linha 2 \n "
+
+      expect(nota.informacoes_adicionais).to eq(
+        ['Linha 1', 'Linha 2']
+      )
+    end
+  end
 end

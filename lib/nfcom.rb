@@ -38,6 +38,7 @@ require_relative 'nfcom/webservices/inutilizacao'
 # Validators
 require_relative 'nfcom/validators/xml_validator'
 require_relative 'nfcom/validators/business_rules'
+require_relative 'nfcom/validators/schema_validator'
 
 # Parsers
 require_relative 'nfcom/parsers/response_parser'

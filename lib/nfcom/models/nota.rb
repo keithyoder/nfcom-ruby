@@ -136,11 +136,13 @@ module Nfcom
     class Nota # rubocop:disable Metrics/ClassLength
       attr_accessor :serie, :numero, :data_emissao, :tipo_emissao, :fatura,
                     :finalidade, :emitente, :destinatario, :assinante, :itens, :total,
-                    :informacoes_adicionais, :chave_acesso, :codigo_verificacao,
+                    :chave_acesso, :codigo_verificacao,
                     :protocolo, :data_autorizacao, :xml_autorizado,
                     :competencia_fatura, :data_vencimento, :valor_liquido_fatura
 
-      attr_reader :metodo_pagamento, :tipo_faturamento
+      attr_reader :metodo_pagamento, :tipo_faturamento, :informacoes_adicionais
+
+      MAX_INF_CPL = 5
 
       def metodo_pagamento=(value)
         if value.is_a?(Symbol)
@@ -343,11 +345,25 @@ module Nfcom
           errors.concat(fatura.erros.map { |e| "Fatura: #{e}" })
         end
 
+        informacoes_adicionais&.each_with_index do |texto, i|
+          errors << "Informação adicional #{i + 1} inválida." unless Validators::SchemaValidator.texto_valido?(texto)
+        end
+
         errors
       end
 
       def autorizada?
         !protocolo.nil? && !data_autorizacao.nil?
+      end
+
+      def informacoes_adicionais=(value)
+        @informacoes_adicionais =
+          value
+            .to_s
+            .split(/\r?\n/)
+            .map(&:strip)
+            .reject(&:empty?)
+            .first(MAX_INF_CPL)
       end
 
       private
