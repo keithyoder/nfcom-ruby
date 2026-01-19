@@ -274,7 +274,7 @@ RSpec.describe Nfcom::Models::Item do
       end
 
       it 'aceita até 120 caracteres' do
-        descricao_longa = 'Plano ' + ('A' * 114)
+        descricao_longa = "Plano #{'A' * 114}"
         item = described_class.new(base_attrs.merge(descricao: descricao_longa))
         expect(item.erros).not_to include(match(/Descrição/))
       end

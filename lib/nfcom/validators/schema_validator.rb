@@ -272,7 +272,7 @@ module Nfcom
       end
 
       # Executa validações múltiplas e retorna mensagens de erro
-      def self.validar_campos(campos) # rubocop:disable Metrics/MethodLength
+      def self.validar_campos(campos) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         erros = []
 
         campos.each do |campo, config|
