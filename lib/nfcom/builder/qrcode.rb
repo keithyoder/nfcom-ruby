@@ -1,56 +1,67 @@
 # frozen_string_literal: true
 
+require 'uri'
+require 'rqrcode'
+require_relative '../validators/schema_validator'
+
 module Nfcom
   module Builder
-    # Gera URL do QR Code para consulta da NF-COM
+    # Gera a URL e SVG do QR Code para consulta da NF-COM.
     #
-    # Esta classe cria a URL de consulta que pode ser codificada em um QR Code,
-    # permitindo que os clientes verifiquem a NF-COM diretamente no portal da SEFAZ.
+    # Esta classe cria a URL que será codificada em um QR Code, permitindo que os clientes
+    # validem a NF-COM diretamente no portal da SEFAZ.
     #
-    # @example Gerar URL do QR Code
-    #   nota = Nfcom::Models::Nota.new
-    #   nota.chave_acesso = "26220512345678000100620010000000011234567890"
-    #
-    #   qrcode = Nfcom::Builder::Qrcode.new(nota, Nfcom.configuration)
-    #   url = qrcode.gerar_url
-    #   # => "https://nfcom-homologacao.sefaz.pe.gov.br/consulta?chNFCom=262205...&tpAmb=2"
-    #
-    # @example Gerar imagem do QR Code (ainda não implementado)
-    #   svg = qrcode.gerar_qrcode_svg
-    #   # => NotImplementedError
-    #
-    # A URL gerada contém:
-    # - chNFCom: Chave de acesso da nota
-    # - tpAmb: Código do ambiente (1=produção, 2=homologação)
-    #
+    # A URL gerada contém os seguintes parâmetros:
+    # - chNFCom: Chave de acesso da NF-COM
+    # - tpAmb: Código do ambiente (1 = produção, 2 = homologação)
     class Qrcode
-      attr_reader :nota, :configuration
+      # @return [String] chave de acesso da NF-COM
+      attr_reader :chave
 
-      def initialize(nota, configuration)
-        @nota = nota
-        @configuration = configuration
+      # @return [Symbol] ambiente :producao ou :homologacao
+      attr_reader :ambiente
+
+      # Inicializa o gerador de QR Code
+      #
+      # @param chave [String] chave de acesso da NF-COM
+      # @param ambiente [Symbol] :producao ou :homologacao
+      #
+      # @raise [ArgumentError] se algum argumento estiver ausente ou inválido
+      def initialize(chave, ambiente)
+        raise ArgumentError, 'Chave de acesso não pode ser vazia' if chave.nil? || chave.strip.empty?
+        unless Nfcom::Validators::SchemaValidator.valido_por_schema?(chave, :er3)
+          raise ArgumentError, "Chave de acesso inválida: #{chave}"
+        end
+
+        raise ArgumentError, 'Ambiente deve ser :producao ou :homologacao' unless %i[producao
+                                                                                     homologacao].include?(ambiente)
+
+        @chave = chave
+        @ambiente = ambiente
       end
 
+      # Gera a URL do QR Code
+      #
+      # @return [String] URL completa
       def gerar_url
-        # URL padrão da SEFAZ para consulta via QR Code
-        base_url = if configuration.homologacao?
-                     "https://nfcom-homologacao.sefaz.#{configuration.estado.downcase}.gov.br/consulta"
-                   else
-                     "https://nfcom.sefaz.#{configuration.estado.downcase}.gov.br/consulta"
-                   end
+        base_url = 'https://nfcom.svrs.rs.gov.br/nfcom/qrcode'
+        tp_amb = ambiente == :homologacao ? 2 : 1
 
-        params = {
-          chNFCom: nota.chave_acesso,
-          tpAmb: configuration.ambiente_codigo
-        }
-
-        "#{base_url}?#{URI.encode_www_form(params)}"
+        "#{base_url}?#{URI.encode_www_form(chNFCom: chave, tpAmb: tp_amb)}"
       end
 
+      # Gera a imagem SVG do QR Code
+      #
+      # @return [String] SVG do QR Code
       def gerar_qrcode_svg
-        # TODO: Implementar geração de imagem SVG do QR Code
-        # Pode usar gems como rqrcode ou similares
-        raise NotImplementedError, 'Geração de imagem QR Code não implementada ainda'
+        qr = RQRCode::QRCode.new(gerar_url)
+        qr.as_svg(
+          offset: 0,
+          color: '000',
+          shape_rendering: 'crispEdges',
+          module_size: 6,
+          standalone: true
+        )
       end
     end
   end
