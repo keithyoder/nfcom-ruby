@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
                      'de serviços de comunicação e telecomunicação'
   spec.homepage = 'https://github.com/keithyoder/nfcom'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '>= 3.1.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/keithyoder/nfcom-ruby'
@@ -32,6 +32,11 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  # Dependencies
-  spec.add_dependency 'nokogiri', '~> 1.18.3'
+  spec.add_dependency 'nokogiri', '>= 1.18.3', '< 2.0'
+  spec.add_dependency 'openssl', '>= 3.0', '< 5.0'
+  spec.add_dependency 'prawn', '>= 2.4', '< 3.0'
+  spec.add_dependency 'prawn-qrcode', '>= 0.3', '< 1.0'
+  spec.add_dependency 'prawn-svg', '>= 0.32', '< 1.0'
+  spec.add_dependency 'prawn-table', '>= 0.2', '< 1.0'
+  spec.add_dependency 'rqrcode', '>= 2.0', '< 4.0'
 end

@@ -27,6 +27,7 @@ require_relative 'nfcom/models/endereco'
 require_relative 'nfcom/builder/xml_builder'
 require_relative 'nfcom/builder/signature'
 require_relative 'nfcom/builder/qrcode'
+require_relative 'nfcom/builder/danfe_com'
 
 # Webservices
 require_relative 'nfcom/webservices/base'

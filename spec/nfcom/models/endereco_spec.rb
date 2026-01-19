@@ -91,7 +91,7 @@ RSpec.describe Nfcom::Models::Endereco do
   describe '#erros' do
     context 'quando valida logradouro' do
       it 'exige logradouro' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :logradouro })
+        endereco = described_class.new(atributos_validos.except(:logradouro))
         expect(endereco.erros).to include('Logradouro é obrigatório')
       end
 
@@ -123,7 +123,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida numero' do
       it 'exige numero' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :numero })
+        endereco = described_class.new(atributos_validos.except(:numero))
         expect(endereco.erros).to include('Número é obrigatório')
       end
 
@@ -150,7 +150,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida bairro' do
       it 'exige bairro' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :bairro })
+        endereco = described_class.new(atributos_validos.except(:bairro))
         expect(endereco.erros).to include('Bairro é obrigatório')
       end
 
@@ -167,7 +167,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida municipio' do
       it 'exige municipio' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :municipio })
+        endereco = described_class.new(atributos_validos.except(:municipio))
         expect(endereco.erros).to include('Município é obrigatório')
       end
 
@@ -184,7 +184,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida codigo_municipio' do
       it 'exige codigo_municipio' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :codigo_municipio })
+        endereco = described_class.new(atributos_validos.except(:codigo_municipio))
         expect(endereco.erros).to include('Código do município é obrigatório')
       end
 
@@ -206,7 +206,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida uf' do
       it 'exige uf' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :uf })
+        endereco = described_class.new(atributos_validos.except(:uf))
         expect(endereco.erros).to include('UF é obrigatório')
       end
 
@@ -223,7 +223,7 @@ RSpec.describe Nfcom::Models::Endereco do
 
     context 'quando valida cep' do
       it 'exige cep' do
-        endereco = described_class.new(atributos_validos.reject { |k, _| k == :cep })
+        endereco = described_class.new(atributos_validos.except(:cep))
         expect(endereco.erros).to include('CEP é obrigatório')
       end
 
