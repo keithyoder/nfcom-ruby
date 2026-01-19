@@ -87,6 +87,8 @@ module Nfcom
     # - Valor unitário deve ser maior que zero
     # - Quantidade deve ser maior que zero
     class Item # rubocop:disable Metrics/ClassLength
+      include Utils::Helpers
+
       attr_accessor :numero_item, :codigo_servico, :descricao,
                     :quantidade, :valor_unitario, :valor_total,
                     :valor_desconto, :valor_outras_despesas,
@@ -95,41 +97,19 @@ module Nfcom
       attr_reader :classe_consumo, :unidade
 
       def classe_consumo=(value)
-        if value.is_a?(Symbol)
-          unless CLASSES_CONSUMO.key?(value)
-            raise Nfcom::Errors::ValidationError,
-                  "Classe de consumo inválida: #{value.inspect}. " \
-                  "Valores válidos: #{CLASSES_CONSUMO.keys.join(', ')}"
-          end
-          @classe_consumo = CLASSES_CONSUMO[value]
-        else
-          value_str = value.to_s
-          unless CLASSES_CONSUMO.values.include?(value_str)
-            raise Nfcom::Errors::ValidationError,
-                  "Classe de consumo inválida: #{value.inspect}. " \
-                  "Valores válidos: #{CLASSES_CONSUMO.values.join(', ')}"
-          end
-          @classe_consumo = value_str
-        end
+        @classe_consumo = if value.is_a?(Symbol)
+                            CLASSES_CONSUMO[value]
+                          else
+                            value.to_s
+                          end
       end
 
       def unidade=(value)
-        if value.is_a?(Symbol)
-          unless UNIDADES_MEDIDA.key?(value)
-            raise Nfcom::Errors::ValidationError,
-                  "Unidade de medida inválida: #{value.inspect}. " \
-                  "Valores válidos: #{UNIDADES_MEDIDA.keys.join(', ')}"
-          end
-          @unidade = UNIDADES_MEDIDA[value]
-        else
-          value_int = value.to_i
-          unless UNIDADES_MEDIDA.values.include?(value_int)
-            raise Nfcom::Errors::ValidationError,
-                  "Unidade de medida inválida: #{value.inspect}. " \
-                  "Valores válidos: #{UNIDADES_MEDIDA.values.join(', ')}"
-          end
-          @unidade = value_int
-        end
+        @unidade = if value.is_a?(Symbol)
+                     UNIDADES_MEDIDA[value]
+                   else
+                     value.to_i
+                   end
       end
 
       # Códigos de serviço principais para provedor de internet
@@ -262,7 +242,7 @@ module Nfcom
       }.freeze
 
       def initialize(attributes = {})
-        @unidade = 'UN'
+        @unidade = 4 # Padrão: UN (Unidade)
         @quantidade = 1
         @valor_desconto = 0.0
         @valor_outras_despesas = 0.0
@@ -278,21 +258,85 @@ module Nfcom
         erros.empty?
       end
 
-      def erros
-        erros = []
-        erros << 'Código de serviço é obrigatório' if codigo_servico.to_s.strip.empty?
-        erros << 'Descrição é obrigatória' if descricao.to_s.strip.empty?
-        erros << 'Classe de consumo é obrigatória' if classe_consumo.to_s.strip.empty?
+      def erros # rubocop:disable Metrics/MethodLength
+        errors = []
 
-        classes_validos = CLASSES_CONSUMO.values
-        unless classes_validos.include?(classe_consumo.to_s)
-          erros << "Classe de consumo inválida. Use um dos valores: #{classes_validos.join(', ')}"
+        # Validações de campos obrigatórios
+        errors << 'Código de serviço é obrigatório' if codigo_servico.to_s.strip.empty?
+        errors << 'Descrição é obrigatória' if descricao.to_s.strip.empty?
+        errors << 'Classe de consumo é obrigatória' if classe_consumo.to_s.strip.empty?
+        errors << 'CFOP é obrigatório' if cfop.to_s.strip.empty?
+
+        # Validações de valores numéricos
+        errors << 'Valor unitário é obrigatório' if valor_unitario.nil?
+        errors << 'Quantidade é obrigatória' if quantidade.nil?
+
+        # Validações lógicas
+        errors << 'Valor unitário deve ser maior que zero' if valor_unitario && valor_unitario.to_f <= 0
+        errors << 'Quantidade deve ser maior que zero' if quantidade && quantidade.to_f <= 0
+
+        # Validações declarativas de formato/schema
+        campos = {}
+
+        # Campos obrigatórios - validar formato apenas se não estiverem vazios
+        unless codigo_servico.to_s.strip.empty?
+          campos[:codigo_servico] = { valor: codigo_servico, validador: :er47, nome: 'Código de serviço', max: 60 }
         end
 
-        erros << 'CFOP é obrigatório' if cfop.to_s.strip.empty?
-        erros << 'Valor unitário deve ser maior que zero' if valor_unitario.to_f <= 0
-        erros << 'Quantidade deve ser maior que zero' if quantidade.to_f <= 0
-        erros
+        unless descricao.to_s.strip.empty?
+          campos[:descricao] = { valor: descricao, validador: :er47, nome: 'Descrição', max: 120 }
+        end
+
+        unless classe_consumo.to_s.strip.empty?
+          campos[:classe_consumo] = { valor: classe_consumo, validador: :er2, nome: 'Classe de consumo' }
+        end
+
+        campos[:cfop] = { valor: cfop, validador: :er73, nome: 'CFOP' } unless cfop.to_s.strip.empty?
+
+        # Unidade (D8 - domain: 1, 2, 3, 4)
+        if unidade && !unidade.to_s.strip.empty?
+          campos[:unidade] = { valor: unidade.to_s, validador: :d8, nome: 'Unidade de medida' }
+        end
+
+        # Quantidade (ER31 - 11 posições, 0-4 decimais)
+        if quantidade&.to_f&.positive?
+          campos[:quantidade] = { valor: formatar_decimal(quantidade, 4), validador: :er31, nome: 'Quantidade' }
+        end
+
+        # Valor unitário (ER39 - 13 posições, 2-8 decimais)
+        if valor_unitario&.to_f&.positive?
+          campos[:valor_unitario] =
+            { valor: formatar_decimal(valor_unitario, 8), validador: :er39, nome: 'Valor unitário' }
+        end
+
+        # Campos opcionais - validar formato apenas se informados
+        if valor_desconto&.to_f&.positive?
+          campos[:valor_desconto] =
+            { valor: formatar_decimal(valor_desconto, 2), validador: :er37, nome: 'Valor de desconto' }
+        end
+
+        if valor_outras_despesas&.to_f&.positive?
+          campos[:valor_outras_despesas] =
+            { valor: formatar_decimal(valor_outras_despesas, 2), validador: :er37, nome: 'Valor de outras despesas' }
+        end
+
+        if valor_total&.to_f&.positive?
+          campos[:valor_total] = { valor: formatar_decimal(valor_total, 8), validador: :er39, nome: 'Valor total' }
+        end
+
+        if classe_consumo.to_s.strip.empty?
+          errors << 'Classe de consumo é obrigatória'
+        elsif !CLASSES_CONSUMO.values.include?(classe_consumo.to_s)
+          errors << "Classe de consumo inválida. Use um dos valores: #{CLASSES_CONSUMO.values.join(', ')}"
+        end
+
+        # Add unidade validation
+        errors << 'Unidade de medida inválida. Use: 1=Minuto, 2=MB, 3=GB, 4=UN' unless [1, 2, 3,
+                                                                                        4].include?(unidade.to_i)
+        # Executar validações declarativas
+        errors.concat(Validators::SchemaValidator.validar_campos(campos))
+
+        errors
       end
 
       def calcular_valor_total
@@ -302,7 +346,7 @@ module Nfcom
       end
 
       def valor_liquido
-        valor_total.to_f - valor_desconto.to_f
+        valor_total.to_f
       end
     end
   end

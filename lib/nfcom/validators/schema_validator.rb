@@ -136,11 +136,69 @@ module Nfcom
         er74: /\A[0-9]{1,6}\z/
       }.freeze
 
-      # Valida um valor contra uma expressão regular do schema
-      #
-      # @param valor [String]
-      # @param chave_regex [Symbol] Ex: :er2, :er7
-      # @return [Boolean]
+      DOMAINS = {
+        # D1 - Códigos UF (IBGE)
+        d1: [11, 12, 13, 14, 15, 16, 17, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+             31, 32, 33, 35, 41, 42, 43, 50, 51, 52, 53],
+
+        # D4 - Modelo NFCom
+        d4: [62],
+
+        # D5 - Siglas UF
+        d5: %w[AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO],
+
+        # D7 - Tipo de Ambiente (tpAmb)
+        d7: [1, 2], # 1=Produção, 2=Homologação
+
+        # D8 - Valores 1-4 (usado em vários campos como uMed)
+        d8: [1, 2, 3, 4],
+
+        # D10 - Indicador booleano
+        d10: [1],
+
+        # D11 - CST ICMS - Tributação normal
+        d11: ['00'],
+
+        # D12 - CST ICMS - Tributação com redução de BC
+        d12: ['20'],
+
+        # D13 - CST ICMS - Isenta/Não tributada
+        d13: %w[40 41],
+
+        # D14 - CST ICMS - Diferimento
+        d14: ['51'],
+
+        # D15 - CST ICMS - Outros
+        d15: ['90'],
+
+        # D16 - CST PIS/COFINS
+        d16: %w[01 02 06 07 08 09 49],
+
+        # D18 - Tipos de assinante
+        d18: [1, 2, 3, 4, 5, 6, 7, 8, 99],
+
+        # D19 - Finalidade da NFCom (finNFCom)
+        d19: [0, 3, 4], # 0=Normal, 3=Substituição, 4=Ajuste
+
+        # D20 - Tipo de Faturamento (tpFat)
+        d20: [0, 1, 2], # 0=Normal, 1=Centralizado, 2=Cofaturamento
+
+        # D22 - Indicador IE Destinatário (indIEDest)
+        d22: [1, 2, 9], # 1=Contribuinte, 2=Isento, 9=Não Contribuinte
+
+        # D23 - Código Regime Tributário (CRT)
+        d23: [1, 2, 3], # 1=Simples Nacional, 2=Simples Excesso, 3=Normal
+
+        # D24 - Tipos de serviço utilizado
+        d24: [1, 2, 3, 4, 5, 6, 7],
+
+        # D25 - Modelo documento (NF21/22)
+        d25: [21, 22],
+
+        # D26 - Motivo de substituição
+        d26: %w[01 02 03 04 05]
+      }.freeze
+
       def self.valido_por_schema?(valor, chave_regex)
         return false if valor.nil?
 
@@ -150,52 +208,34 @@ module Nfcom
         valor.to_s.match?(pattern)
       end
 
-      # cNF (Código Numérico) – exatamente 7 dígitos
-      def self.cnf_valido?(cnf)
-        valido_por_schema?(cnf.to_s, :er2)
+      # Valida um valor contra um domínio
+      def self.valido_por_dominio?(valor, chave_dominio, converter_para_int: false)
+        return false if valor.nil?
+
+        dominio = DOMAINS[chave_dominio]
+        return false unless dominio
+
+        valor_comparar = converter_para_int ? valor.to_i : valor.to_s.upcase
+        dominio.include?(valor_comparar)
       end
 
-      # CNPJ – apenas valida formato (14 dígitos)
+      # Validadores complexos que fazem mais do que checar pattern/domain
+
       def self.cnpj_formato_valido?(cnpj)
         cnpj_limpo = cnpj.to_s.gsub(/\D/, '')
         cnpj_limpo.length == 14 && cnpj_limpo.match?(/\A[0-9]{14}\z/)
       end
 
-      # CPF – apenas valida formato (11 dígitos)
       def self.cpf_formato_valido?(cpf)
         cpf_limpo = cpf.to_s.gsub(/\D/, '')
         valido_por_schema?(cpf_limpo, :er9)
       end
 
-      # CEP – 8 dígitos
       def self.cep_valido?(cep)
         cep_limpo = cep.to_s.gsub(/\D/, '')
         valido_por_schema?(cep_limpo, :er67)
       end
 
-      # Código de município (IBGE) – 7 dígitos
-      def self.codigo_municipio_valido?(codigo)
-        valido_por_schema?(codigo.to_s, :er2)
-      end
-
-      # Número da NF – 1 a 999.999.999
-      def self.numero_nf_valido?(numero)
-        valido_por_schema?(numero.to_s, :er43)
-      end
-
-      # Série da NF – 0 a 999
-      def self.serie_valida?(serie)
-        valido_por_schema?(serie.to_s, :er44)
-      end
-
-      # Email (opcional)
-      def self.email_valido?(email)
-        return true if email.nil? || email.to_s.strip.empty?
-
-        valido_por_schema?(email.to_s, :er72)
-      end
-
-      # Telefone (opcional) – 7 a 12 dígitos
       def self.telefone_valido?(telefone)
         return true if telefone.nil? || telefone.to_s.strip.empty?
 
@@ -203,17 +243,12 @@ module Nfcom
         valido_por_schema?(telefone_limpo, :er61)
       end
 
-      # CFOP
-      def self.cfop_valido?(cfop)
-        valido_por_schema?(cfop.to_s, :er73)
+      def self.email_valido?(email)
+        return true if email.nil? || email.to_s.strip.empty?
+
+        valido_por_schema?(email.to_s, :er72)
       end
 
-      # Valor monetário (13,2)
-      def self.valor_valido?(valor)
-        valido_por_schema?(valor.to_s, :er36)
-      end
-
-      # Texto geral (não pode ser apenas espaços)
       def self.texto_valido?(texto, tamanho_max = nil)
         return false if texto.nil? || texto.to_s.strip.empty?
         return false if tamanho_max && texto.to_s.length > tamanho_max
@@ -221,21 +256,23 @@ module Nfcom
         valido_por_schema?(texto.to_s, :er47)
       end
 
-      # Chave de acesso – 44 dígitos
-      def self.chave_acesso_valida?(chave)
-        valido_por_schema?(chave.to_s, :er3)
+      def self.data_valida?(data)
+        return false if data.nil? || data.to_s.strip.empty?
+
+        valido_por_schema?(data.to_s, :er48)
       end
 
-      # ID com prefixo NFCom
-      def self.id_valido?(id)
-        valido_por_schema?(id.to_s, :er65)
+      def self.cst_icms_valido?(cst)
+        cst_str = cst.to_s.rjust(2, '0')
+        DOMAINS[:d11].include?(cst_str) ||
+          DOMAINS[:d12].include?(cst_str) ||
+          DOMAINS[:d13].include?(cst_str) ||
+          DOMAINS[:d14].include?(cst_str) ||
+          DOMAINS[:d15].include?(cst_str)
       end
 
       # Executa validações múltiplas e retorna mensagens de erro
-      #
-      # @param campos [Hash]
-      # @return [Array<String>]
-      def self.validar_campos(campos) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
+      def self.validar_campos(campos) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         erros = []
 
         campos.each do |campo, config|
@@ -243,23 +280,28 @@ module Nfcom
           validador = config[:validador]
           nome = config[:nome] || campo.to_s
 
-          valido = case validador
-                   when :cnf then cnf_valido?(valor)
-                   when :cnpj then cnpj_formato_valido?(valor)
-                   when :cpf then cpf_formato_valido?(valor)
-                   when :cep then cep_valido?(valor)
-                   when :municipio then codigo_municipio_valido?(valor)
-                   when :numero_nf then numero_nf_valido?(valor)
-                   when :serie then serie_valida?(valor)
-                   when :email then email_valido?(valor)
-                   when :telefone then telefone_valido?(valor)
-                   when :cfop then cfop_valido?(valor)
-                   when :valor then valor_valido?(valor)
-                   when :texto then texto_valido?(valor, config[:max])
-                   when :chave then chave_acesso_valida?(valor)
-                   when :id then id_valido?(valor)
-                   when Symbol then valido_por_schema?(valor, validador)
-                   else true
+          valido = if validador.to_s.start_with?('er')
+                     # ER pattern: :er48, :er59, etc.
+                     valido_por_schema?(valor, validador)
+                   elsif validador.to_s.start_with?('d')
+                     # Domain: :d18, :d24, etc.
+                     # Assume integer domains unless the domain contains strings
+                     sample = DOMAINS[validador]&.first
+                     converter_para_int = sample.is_a?(Integer)
+                     valido_por_dominio?(valor, validador, converter_para_int: converter_para_int)
+                   else
+                     # Named validator methods
+                     case validador
+                     when :cnpj then cnpj_formato_valido?(valor)
+                     when :cpf then cpf_formato_valido?(valor)
+                     when :cep then cep_valido?(valor)
+                     when :telefone then telefone_valido?(valor)
+                     when :email then email_valido?(valor)
+                     when :texto then texto_valido?(valor, config[:max])
+                     when :data then data_valida?(valor)
+                     when :cst_icms then cst_icms_valido?(valor)
+                     else true
+                     end
                    end
 
           erros << "#{nome} inválido: '#{valor}'" unless valido
