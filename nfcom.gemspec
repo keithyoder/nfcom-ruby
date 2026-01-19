@@ -37,5 +37,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'prawn', '>= 2.4', '< 3.0'
   spec.add_dependency 'prawn-qrcode', '>= 0.3', '< 1.0'
   spec.add_dependency 'prawn-svg', '>= 0.32', '< 1.0'
+  spec.add_dependency 'prawn-table', '>= 0.2', '< 1.0'
   spec.add_dependency 'rqrcode', '>= 2.0', '< 4.0'
 end
