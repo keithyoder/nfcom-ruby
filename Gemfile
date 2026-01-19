@@ -9,7 +9,6 @@ gem 'base64'
 gem 'matrix'
 gem 'pry', '~> 0.14'
 gem 'rake', '~> 13.0'
-gem 'rqrcode_core'
 gem 'rubocop', '~> 1.50'
 gem 'rubocop-rspec', '~> 3.0', require: false
 gem 'vcr', '~> 6.1'
