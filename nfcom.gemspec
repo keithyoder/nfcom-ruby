@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'nokogiri', '>= 1.15.7', '< 2.0'
-  spec.add_dependency 'openssl', '>= 3.0', '< 5.0'
+  spec.add_dependency 'openssl', '>= 2.0', '< 5.0'
   spec.add_dependency 'prawn', '>= 2.4', '< 3.0'
   spec.add_dependency 'prawn-qrcode', '>= 0.3', '< 1.0'
   spec.add_dependency 'prawn-svg', '>= 0.32', '< 1.0'
