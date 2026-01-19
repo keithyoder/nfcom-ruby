@@ -102,21 +102,26 @@ module Nfcom
         xml.dest do
           xml.xNome limitar_texto(nota.destinatario.razao_social, 60)
 
+          cpf  = apenas_numeros(nota.destinatario.cpf)
+          cnpj = apenas_numeros(nota.destinatario.cnpj)
+          ie   = apenas_numeros(nota.destinatario.inscricao_estadual)
+
           # CPF ou CNPJ (mutuamente exclusivo)
-          if nota.destinatario.pessoa_juridica?
-            xml.CNPJ apenas_numeros(nota.destinatario.cnpj)
+          if cnpj.present?
+            xml.CNPJ cnpj
           else
-            xml.CPF apenas_numeros(nota.destinatario.cpf)
+            xml.CPF cpf
           end
 
-          # Indicador de IE: 1=Contribuinte, 2=Isento, 9=Não Contribuinte
-          xml.indIEDest INDIEDEST_NAO_CONTRIBUINTE
+          if cnpj.present? && ie.present?
+            # PJ com IE → Contribuinte
+            xml.indIEDest INDIEDEST_CONTRIBUINTE
+            xml.IE ie
+          else
+            # PF ou PJ sem IE → Não contribuinte
+            xml.indIEDest INDIEDEST_NAO_CONTRIBUINTE
+          end
 
-          # IE apenas se for contribuinte
-          xml.IE apenas_numeros(nota.destinatario.inscricao_estadual) if nota.destinatario.inscricao_estadual
-          # IM - Inscrição Municipal (opcional)
-
-          # Endereço do destinatário
           gerar_endereco(xml, nota.destinatario.endereco, 'dest')
         end
       end
