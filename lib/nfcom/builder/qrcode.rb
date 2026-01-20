@@ -44,7 +44,7 @@ module Nfcom
       #
       # @return [String] URL completa
       def gerar_url
-        base_url = 'https://nfcom.svrs.rs.gov.br/nfcom/qrcode'
+        base_url = 'https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode'
         tp_amb = ambiente == :homologacao ? 2 : 1
 
         "#{base_url}?#{URI.encode_www_form(chNFCom: chave, tpAmb: tp_amb)}"
