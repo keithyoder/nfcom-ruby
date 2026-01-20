@@ -32,13 +32,13 @@ RSpec.describe Nfcom::Builder::Qrcode do
   describe '#gerar_url' do
     it 'returns correct URL for homologacao' do
       qr = described_class.new(valid_chave, :homologacao)
-      expected_url = "https://nfcom.svrs.rs.gov.br/nfcom/qrcode?chNFCom=#{valid_chave}&tpAmb=2"
+      expected_url = "https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode?chNFCom=#{valid_chave}&tpAmb=2"
       expect(qr.gerar_url).to eq(expected_url)
     end
 
     it 'returns correct URL for producao' do
       qr = described_class.new(valid_chave, :producao)
-      expected_url = "https://nfcom.svrs.rs.gov.br/nfcom/qrcode?chNFCom=#{valid_chave}&tpAmb=1"
+      expected_url = "https://dfe-portal.svrs.rs.gov.br/nfcom/qrcode?chNFCom=#{valid_chave}&tpAmb=1"
       expect(qr.gerar_url).to eq(expected_url)
     end
   end
