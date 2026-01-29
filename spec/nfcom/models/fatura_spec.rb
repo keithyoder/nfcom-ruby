@@ -512,4 +512,24 @@ RSpec.describe Nfcom::Models::Fatura do
       end
     end
   end
+
+  describe '#linha_digitavel' do
+    it 'delegates linha digitavel generation to CodigoDeBarras' do
+      fatura = described_class.new(
+        codigo_barras: '23793381286000000099901234567890123456789012'
+      )
+
+      expect(fatura.linha_digitavel).to be_a(String)
+      expect(fatura.linha_digitavel).to match(/\A\d{5}\.\d{5} \d{5}\.\d{6} \d{5}\.\d{6} \d \d{14}\z/)
+    end
+
+    it 'returns an empty string if format is invalid' do
+      fatura = described_class.new(
+        codigo_barras: '2379338128600000009990123456789012345678901' # missing one digit
+      )
+
+      expect(fatura.linha_digitavel).to be_a(String)
+      expect(fatura.linha_digitavel).to eq('')
+    end
+  end
 end

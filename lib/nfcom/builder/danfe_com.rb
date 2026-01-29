@@ -430,9 +430,9 @@ module Nfcom
       end
 
       def formatar_codigo_barras(codigo)
-        return '' unless codigo
-
-        codigo.scan(/.{5}/).join(' ')
+        Fatura::CodigoDeBarras.new(codigo).linha_digitavel
+      rescue StandardError
+        ''
       end
 
       # ----------------------------

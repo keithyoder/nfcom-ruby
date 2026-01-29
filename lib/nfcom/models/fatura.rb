@@ -133,6 +133,12 @@ module Nfcom
         errors
       end
 
+      def linha_digitavel
+        CodigoDeBarras.new(codigo_barras).linha_digitavel
+      rescue StandardError
+        ''
+      end
+
       private
 
       def competencia_valida?

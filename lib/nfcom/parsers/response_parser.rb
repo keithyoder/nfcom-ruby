@@ -73,21 +73,12 @@ module Nfcom
     # - 135 - Evento registrado e vinculado a NF-COM
     #
     # Exceções lançadas:
-    # - Errors::NotaRejeitada - Quando a nota é rejeitada pela SEFAZ
+    # - Nfcom::Errors::NotaRejeitada - Quando a nota é rejeitada pela SEFAZ
     # - Errors::NotaDenegada - Quando o uso da nota é denegado
     #
     # @note Este parser é usado internamente pelo Client, você normalmente
     #   não precisa instanciá-lo diretamente.
     class ResponseParser
-      class NotaRejeitada < StandardError
-        attr_reader :codigo, :motivo
-
-        def initialize(codigo, motivo)
-          @codigo = codigo
-          @motivo = motivo
-          super("#{codigo}: #{motivo}")
-        end
-      end
       attr_reader :http_response, :document
 
       def initialize(http_response)
@@ -179,7 +170,7 @@ module Nfcom
 
       # Valida se a resposta contém o elemento esperado
       def validate_response!(ret)
-        raise NotaRejeitada.new('000', 'Resposta inválida') unless ret
+        raise Nfcom::Errors::NotaRejeitada.new('000', 'Resposta inválida') unless ret
       end
 
       # Extrai código de status e motivo
@@ -204,7 +195,7 @@ module Nfcom
 
       # Valida se a nota foi autorizada
       def validate_authorization!(c_stat, x_motivo)
-        raise NotaRejeitada.new(c_stat, x_motivo) unless c_stat == '100'
+        raise Nfcom::Errors::NotaRejeitada.new(c_stat, x_motivo) unless c_stat == '100'
       end
 
       # Constrói hash de resposta de sucesso
