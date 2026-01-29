@@ -20,6 +20,8 @@ require_relative 'nfcom/models/destinatario'
 require_relative 'nfcom/models/assinante'
 require_relative 'nfcom/models/item'
 require_relative 'nfcom/models/fatura'
+require_relative 'nfcom/models/fatura/codigo_de_barras'
+require_relative 'nfcom/models/fatura/codigo_de_barras/formato_44'
 require_relative 'nfcom/models/total'
 require_relative 'nfcom/models/endereco'
 

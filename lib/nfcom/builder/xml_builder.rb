@@ -107,13 +107,13 @@ module Nfcom
           ie   = apenas_numeros(nota.destinatario.inscricao_estadual)
 
           # CPF ou CNPJ (mutuamente exclusivo)
-          if cnpj.present?
-            xml.CNPJ cnpj
-          else
+          if cnpj.to_s.strip == ''
             xml.CPF cpf
+          else
+            xml.CNPJ cnpj
           end
 
-          if cnpj.present? && ie.present?
+          if cnpj.to_s.strip != '' && ie.to_s.strip != ''
             # PJ com IE → Contribuinte
             xml.indIEDest INDIEDEST_CONTRIBUINTE
             xml.IE ie
