@@ -4,9 +4,9 @@ require 'spec_helper'
 require 'net/http'
 
 RSpec.describe Nfcom::Parsers::ResponseParser do
-  subject(:parser) { described_class.new(http_response) }
+  subject(:parser) { described_class.new(xml_response) }
 
-  let(:http_response) { instance_double(Net::HTTPResponse, body: xml) }
+  let(:xml_response) { xml } # Changed: pass the XML string directly
 
   describe '#parse_autorizacao' do
     context 'when authorized (cStat = 100)' do

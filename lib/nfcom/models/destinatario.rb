@@ -106,6 +106,19 @@ module Nfcom
         errors << 'CPF inválido' if !cpf.to_s.strip.empty? && !cpf_valido?(cpf)
         errors << 'Razão social é obrigatória' if razao_social.to_s.strip.empty?
         errors.concat(endereco.erros.map { |e| "Endereço: #{e}" }) unless endereco.valido?
+
+        campos = {}
+
+        campos[:razao_social] = {
+          valor: razao_social,
+          validador: :er47,
+          nome: 'Razão social',
+          max: 60
+        }
+
+        campos[:email] = { valor: email, validador: :er72, nome: 'Email' } if email && !email.to_s.strip.empty?
+        errors.concat(Validators::SchemaValidator.validar_campos(campos))
+
         errors
       end
 
