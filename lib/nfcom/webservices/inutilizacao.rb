@@ -3,38 +3,68 @@
 module Nfcom
   module Webservices
     class Inutilizacao < Base
-      def inutilizar(serie:, numero_inicial:, numero_final:, justificativa:) # rubocop:disable Metrics/MethodLength
-        url = configuration.webservice_url(:inutilizacao)
-        raise Errors::ConfigurationError, "URL de inutilização não configurada para #{configuration.estado}" unless url
+      # Solicita inutilização de faixa de numeração de NFCom
+      #
+      # @return [String] XML SOAP bruto retornado pela SEFAZ
+      def inutilizar(serie:, numero_inicial:, numero_final:, justificativa:)
+        url = url_inutilizacao!
 
-        client = criar_cliente_soap(url)
+        body_xml = build_inutilizacao_body(
+          serie: serie,
+          numero_inicial: numero_inicial,
+          numero_final: numero_final,
+          justificativa: justificativa
+        )
 
-        message = {
-          'versao' => '1.00',
-          'infInut' => {
-            'tpAmb' => configuration.ambiente_codigo,
-            'cUF' => configuration.codigo_uf,
-            'ano' => Time.now.strftime('%y'),
-            'CNPJ' => configuration.cnpj.gsub(/\D/, ''),
-            'mod' => '62',
-            'serie' => serie,
-            'nNFIni' => numero_inicial,
-            'nNFFin' => numero_final,
-            'xJust' => justificativa
-          }
-        }
+        envelope = montar_envelope(body_xml)
 
-        begin
-          response = client.call(
-            :nfcom_inutilizacao,
-            soap_action: 'http://www.portalfiscal.inf.br/nfcom/wsdl/nfcomInutilizacao',
-            message: { 'nfcomDadosMsg' => message }
+        post_soap(
+          url: url,
+          action: soap_action,
+          xml: envelope
+        )
+      rescue StandardError => e
+        configuration.logger&.error("Erro ao inutilizar NFCom: #{e.message}")
+        raise
+      end
+
+      private
+
+      def url_inutilizacao!
+        configuration.webservice_url(:inutilizacao) ||
+          raise(
+            Errors::ConfigurationError,
+            "URL de inutilização não configurada para #{configuration.estado}"
           )
+      end
 
-          extrair_resposta(response, :nfcom_inutilizacao_response)
-        rescue StandardError => e
-          tratar_erro_soap(e)
-        end
+      def soap_action
+        'http://www.portalfiscal.inf.br/nfcom/wsdl/nfcomInutilizacao'
+      end
+
+      # Monta o XML da inutilização conforme schema NFCom
+      #
+      # @return [String]
+      def build_inutilizacao_body(serie:, numero_inicial:, numero_final:, justificativa:)
+        <<~XML
+          <nfcomInutilizacaoNF xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/nfcomInutilizacao">
+            <NFComDadosMsg>
+              <inutNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
+                <infInut>
+                  <tpAmb>#{configuration.ambiente_codigo}</tpAmb>
+                  <cUF>#{configuration.codigo_uf}</cUF>
+                  <ano>#{Time.now.strftime('%y')}</ano>
+                  <CNPJ>#{configuration.cnpj.gsub(/\D/, '')}</CNPJ>
+                  <mod>62</mod>
+                  <serie>#{serie}</serie>
+                  <nNFIni>#{numero_inicial}</nNFIni>
+                  <nNFFin>#{numero_final}</nNFFin>
+                  <xJust>#{justificativa}</xJust>
+                </infInut>
+              </inutNFCom>
+            </NFComDadosMsg>
+          </nfcomInutilizacaoNF>
+        XML
       end
     end
   end
