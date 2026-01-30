@@ -79,13 +79,10 @@ module Nfcom
     # @note Este parser é usado internamente pelo Client, você normalmente
     #   não precisa instanciá-lo diretamente.
     class ResponseParser
-      attr_reader :http_response, :document
+      attr_reader :document
 
       def initialize(http_response)
-        @http_response = http_response
-
-        # Convert HTTP response body to Nokogiri document
-        @document = Nokogiri::XML(http_response.body)
+        @document = Nokogiri::XML(http_response)
       end
 
       # Processa resposta de autorização

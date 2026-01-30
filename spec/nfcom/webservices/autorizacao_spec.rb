@@ -64,12 +64,13 @@ RSpec.describe Nfcom::Webservices::Autorizacao do
         allow(http).to receive(:request).and_return(http_response)
 
         result = service.enviar(xml_assinado)
+        result_xml = Nokogiri::XML(result)
         ns = { nfcom: 'http://www.portalfiscal.inf.br/nfcom' }
 
-        expect(result).to be_a(Nokogiri::XML::Document)
-        expect(result.at_xpath('//nfcom:cStat', ns).text).to eq('100')
-        expect(result.at_xpath('//nfcom:xMotivo', ns).text).to eq('Autorizado')
-        expect(result.at_xpath('//nfcom:protNFCom', ns)).not_to be_nil
+        expect(result_xml).to be_a(Nokogiri::XML::Document)
+        expect(result_xml.at_xpath('//nfcom:cStat', ns).text).to eq('100')
+        expect(result_xml.at_xpath('//nfcom:xMotivo', ns).text).to eq('Autorizado')
+        expect(result_xml.at_xpath('//nfcom:protNFCom', ns)).not_to be_nil
         expect(http).to have_received(:request).once
       end
     end
