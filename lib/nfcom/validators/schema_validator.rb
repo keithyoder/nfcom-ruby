@@ -253,7 +253,7 @@ module Nfcom
         return false if texto.nil? || texto.to_s.strip.empty?
         return false if tamanho_max && texto.to_s.length > tamanho_max
         # Verifica espaços no início ou fim (ER47 não permite)
-        return false if texto_str != texto_str.strip
+        return false if texto != texto.strip
 
         valido_por_schema?(texto.to_s, :er47)
       end

@@ -10,7 +10,9 @@ module Nfcom
                 "URL de recepção não configurada para #{configuration.estado}"
         end
 
-        xml_limpo      = Utils::XmlCleaner.clean(xml_assinado)
+        xml_limpo = Utils::XmlCleaner.clean(xml_assinado)
+        configuration.logger&.debug("XML da nota:\n#{xml_limpo}") if configuration.log_level == :debug
+
         xml_comprimido = Utils::Compressor.gzip_base64(xml_limpo)
 
         body_xml = build_nfcom_body(xml_comprimido)

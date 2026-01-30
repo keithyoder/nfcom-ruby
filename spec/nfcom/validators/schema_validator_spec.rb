@@ -531,4 +531,26 @@ RSpec.describe Nfcom::Validators::SchemaValidator do
       expect(erros).to include('CEP inválido: \'5000000\'')
     end
   end
+
+  describe '.texto_valido?' do
+    it 'retorna true para texto válido' do
+      expect(described_class.texto_valido?('Texto válido')).to be true
+    end
+
+    it 'retorna false para texto com espaços iniciais' do
+      expect(described_class.texto_valido?('  Texto')).to be false
+    end
+
+    it 'retorna false para texto com espaços finais' do
+      expect(described_class.texto_valido?('Texto  ')).to be false
+    end
+
+    it 'retorna false para nil' do
+      expect(described_class.texto_valido?(nil)).to be false
+    end
+
+    it 'retorna false quando excede tamanho máximo' do
+      expect(described_class.texto_valido?('Texto', 3)).to be false
+    end
+  end
 end
