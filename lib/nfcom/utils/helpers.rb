@@ -43,8 +43,9 @@ module Nfcom
 
       # Limita texto ao tamanho máximo
       def limitar_texto(texto, tamanho_max)
-        texto = texto.to_s
-        texto.length > tamanho_max ? texto[0...tamanho_max] : texto
+        texto = texto.to_s.strip
+        texto = texto[0...tamanho_max].strip if texto.length > tamanho_max
+        texto
       end
 
       # Remove acentos e caracteres especiais
