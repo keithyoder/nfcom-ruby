@@ -51,9 +51,8 @@ module Nfcom
         pdf.font 'Helvetica'
       end
 
-      # rubocop:disable Metrics/AbcSize
       def gerar_conteudo(pdf)
-        ide       = xml_doc.at_xpath('//xmlns:ide', 'xmlns' => ns)
+        ide = xml_doc.at_xpath('//xmlns:ide', 'xmlns' => ns)
         emit      = xml_doc.at_xpath('//xmlns:emit', 'xmlns' => ns)
         dest      = xml_doc.at_xpath('//xmlns:dest', 'xmlns' => ns)
         total     = xml_doc.at_xpath('//xmlns:total', 'xmlns' => ns)
@@ -75,12 +74,10 @@ module Nfcom
         gerar_info_adicional(pdf, inf_adic) if inf_adic
         gerar_rodape(pdf, ide, prot)
       end
-      # rubocop:enable Metrics/AbcSize
 
       # ----------------------------
       # HEADER / LOGO
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize
       def gerar_cabecalho(pdf, y_pos)
         if logo_path && File.exist?(logo_path)
           begin
@@ -103,7 +100,6 @@ module Nfcom
 
         y_pos - 22.mm
       end
-      # rubocop:enable Metrics/AbcSize
 
       def renderizar_logo_svg(pdf, y_pos)
         raise 'prawn-svg não instalado' unless defined?(Prawn::Svg)
@@ -114,7 +110,6 @@ module Nfcom
       # ----------------------------
       # EMITENTE / DESTINATARIO
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize
       def gerar_info_emitente_documento(pdf, emit, ide, y_pos)
         pdf.stroke_rectangle [0, y_pos], 200.mm, 30.mm
         emit_info = extrair_emitente(emit)
@@ -143,9 +138,7 @@ module Nfcom
 
         y_pos - 33.mm
       end
-      # rubocop:enable Metrics/AbcSize
 
-      # rubocop:disable Metrics/AbcSize
       def gerar_destinatario(pdf, dest, y_pos)
         pdf.stroke_rectangle [0, y_pos], 200.mm, 28.mm
         dest_info = extrair_destinatario(dest)
@@ -172,7 +165,6 @@ module Nfcom
 
         y_pos - 32.mm
       end
-      # rubocop:enable Metrics/AbcSize
 
       # ----------------------------
       # QR CODE
@@ -238,7 +230,7 @@ module Nfcom
       # ----------------------------
       # EXTRACTION METHODS
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def extrair_emitente(emit)
         return {} unless emit
 
@@ -274,7 +266,7 @@ module Nfcom
           cep: dest.at_xpath('xmlns:enderDest/xmlns:CEP', 'xmlns' => ns)&.text
         }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       # ----------------------------
       # HELPER METHODS
@@ -355,7 +347,7 @@ module Nfcom
       # ----------------------------
       # ASSINANTE
       # ----------------------------
-      def gerar_assinante(pdf, assinante, y_pos) # rubocop:disable Metrics/AbcSize
+      def gerar_assinante(pdf, assinante, y_pos)
         pdf.stroke_rectangle [0, y_pos], 200.mm, 18.mm
         pdf.text_box 'DADOS DO ASSINANTE', at: [2.mm, y_pos - 2.mm], size: 10, style: :bold
 
@@ -386,7 +378,6 @@ module Nfcom
       # ----------------------------
       # FATURAMENTO
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize
       def gerar_faturamento(pdf, gfat, y_pos)
         pdf.stroke_rectangle [0, y_pos], 200.mm, 22.mm
         pdf.text_box 'INFORMAÇÕES DE FATURAMENTO', at: [2.mm, y_pos - 2.mm], size: 10, style: :bold
@@ -413,7 +404,6 @@ module Nfcom
 
         y_pos - 25.mm
       end
-      # rubocop:enable Metrics/AbcSize
 
       def formatar_competencia(comp)
         return '' unless comp
@@ -430,7 +420,7 @@ module Nfcom
       end
 
       def formatar_codigo_barras(codigo)
-        Fatura::CodigoDeBarras.new(codigo).linha_digitavel
+        Nfcom::Models::Fatura::CodigoDeBarras.new(codigo).linha_digitavel
       rescue StandardError
         ''
       end
@@ -438,7 +428,6 @@ module Nfcom
       # ----------------------------
       # ITENS
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def gerar_itens(pdf, itens, y_pos)
         y_pos -= 5.mm
         pdf.move_cursor_to(y_pos)
@@ -472,7 +461,6 @@ module Nfcom
 
         pdf.cursor
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       def unidade_texto(codigo)
         { '1' => 'Min', '2' => 'MB', '3' => 'GB', '4' => 'UN' }[codigo] || codigo
@@ -493,7 +481,6 @@ module Nfcom
       # ----------------------------
       # TOTAIS
       # ----------------------------
-      # rubocop:disable Metrics/AbcSize
       def gerar_totais(pdf, total, y_pos)
         pdf.move_cursor_to(y_pos)
         pdf.move_down 3.mm
@@ -524,7 +511,6 @@ module Nfcom
         pdf.move_down 40.mm
         pdf.cursor
       end
-      # rubocop:enable Metrics/AbcSize
 
       # ----------------------------
       # INFORMAÇÕES ADICIONAIS
