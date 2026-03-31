@@ -138,7 +138,8 @@ module Nfcom
                     :finalidade, :emitente, :destinatario, :assinante, :itens, :total,
                     :chave_acesso, :codigo_verificacao,
                     :protocolo, :data_autorizacao, :xml_autorizado,
-                    :competencia_fatura, :data_vencimento, :valor_liquido_fatura
+                    :competencia_fatura, :data_vencimento, :valor_liquido_fatura,
+                    :chave_nfcom_substituida, :motivo_substituicao
 
       attr_reader :metodo_pagamento, :tipo_faturamento, :informacoes_adicionais
 
@@ -347,6 +348,16 @@ module Nfcom
 
         informacoes_adicionais&.each_with_index do |texto, i|
           errors << "Informação adicional #{i + 1} inválida." unless Validators::SchemaValidator.texto_valido?(texto)
+        end
+
+        if finalidade == :substituicao
+          if chave_nfcom_substituida.nil?
+            errors << 'Chave da NFCom substituída é obrigatória para notas de substituição'
+          end
+          errors << 'Motivo da substituição é obrigatório' if motivo_substituicao.nil?
+          unless chave_nfcom_substituida.nil? || chave_nfcom_substituida.to_s.match?(/\A[0-9]{44}\z/)
+            errors << 'Chave da NFCom substituída inválida (deve ter 44 dígitos)'
+          end
         end
 
         errors
