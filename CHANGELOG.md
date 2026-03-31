@@ -43,5 +43,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contingência (FS-DA) será implementada em versão futura
 - Cancelamento será implementado em versão futura
 
-[Unreleased]: https://github.com/keithyoder/nfcom/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/keithyoder/nfcom/releases/tag/v0.1.0
+## [0.1.1] - 2026-01-15
+
+### Added
+- Gerador de DANFE-COM em PDF via Prawn (`Nfcom::DanfeCom`)
+  - Layout completo: cabeçalho, emitente, destinatário, itens, totais, fatura
+  - Exibição do período de uso do serviço (`dPerUsoIni` / `dPerUsoFim`)
+  - Banner do Simples Nacional quando `CRT = 1`
+  - Suporte a logotipo (PNG e SVG via prawn-svg)
+  - Formatação de código de barras e exibição de QR Code
+  - Layout dinâmico adaptável ao conteúdo
+- Gerador de código de barras (`Nfcom::Models::Fatura::CodigoDeBarras`)
+- Modelo `Formato44` para representação da linha digitável
+
+## [0.1.2] - 2026-03-31
+
+### Added
+- Suporte a notas de substituição (`finalidade: :substituicao`)
+  - Atributos `chave_nfcom_substituida` e `motivo_substituicao` no modelo `Nota`
+  - Geração do grupo `gSub` no XML (`chNFCom` + `motSub`) conforme schema NFCom v1.00
+  - Validação de presença e formato da chave substituída (44 dígitos) e do motivo (D26)
+  - Todos os 5 motivos de substituição suportados: erro de preço, erro cadastral, decisão judicial, erro de tributação e descontinuidade do serviço

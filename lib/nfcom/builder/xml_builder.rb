@@ -37,7 +37,7 @@ module Nfcom
               gerar_emit(xml)
               gerar_dest(xml)
               gerar_assinante(xml) if nota.assinante
-              # gSub iria aqui (substituição)
+              gerar_sub(xml) if nota.finalidade == :substituicao
               # gCofat iria aqui (cofaturamento)
               gerar_detalhes(xml)
               gerar_total(xml)
@@ -345,6 +345,17 @@ module Nfcom
 
         # Formato: URL?chNFCom=CHAVE&tpAmb=AMBIENTE
         "#{base_url}?chNFCom=#{nota.chave_acesso}&tpAmb=#{configuration.ambiente_codigo}"
+      end
+
+      # Gera o grupo de informações da substituição (tag gSub)
+      # Obrigatório quando finNFCom = 3 (Substituição)
+      def gerar_sub(xml)
+        return unless nota.chave_nfcom_substituida
+
+        xml.gSub do
+          xml.chNFCom nota.chave_nfcom_substituida
+          xml.motSub nota.motivo_substituicao.to_s.rjust(2, '0')
+        end
       end
     end
   end
