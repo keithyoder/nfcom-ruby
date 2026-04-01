@@ -189,7 +189,7 @@ RSpec.describe Nfcom::Builder::DanfeCom do
       it 'agrupa em blocos de 4 separados por espaço' do
         chave = '12345678901234567890123456789012345678901234'
         resultado = danfe.send(:formatar_chave_acesso, chave)
-        expect(resultado.split(' ').length).to eq(11)
+        expect(resultado.split.length).to eq(11)
       end
 
       it 'retorna string vazia para nil' do
