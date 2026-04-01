@@ -36,13 +36,12 @@ module Nfcom
       end
 
       def montar_envelope(body_xml)
-        <<~SOAP
-          <soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-            <soap12:Body>
-              #{body_xml}
-            </soap12:Body>
-          </soap12:Envelope>
-        SOAP
+        xml = '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">' \
+              '<soap:Body>' \
+              "#{body_xml}" \
+              '</soap:Body>' \
+              '</soap:Envelope>'
+        Utils::XmlCleaner.clean(xml)
       end
 
       private

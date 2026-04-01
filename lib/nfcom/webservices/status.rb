@@ -39,7 +39,7 @@ module Nfcom
       end
 
       def soap_action
-        'http://www.portalfiscal.inf.br/nfcom/wsdl/NFComStatusServico/nfcomStatusServico'
+        'http://www.portalfiscal.inf.br/nfcom/wsdl/NFComStatusServico/nfcomStatusServicoNF'
       end
 
       # Monta o XML da consulta de status do serviço
@@ -50,15 +50,13 @@ module Nfcom
       #
       # @return [String]
       def build_status_body
-        <<~XML
-          <nfcomStatusServicoNF xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComStatusServico">
-            <NFComDadosMsg>
-              <consStatServNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
-                <tpAmb>#{configuration.ambiente_codigo}</tpAmb>
-                <xServ>STATUS</xServ>
-              </consStatServNFCom>
-            </NFComDadosMsg>
-          </nfcomStatusServicoNF>
+        <<~XML.strip
+          <nfcomDadosMsg xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComStatusServico">
+            <consStatServNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
+              <tpAmb>#{configuration.ambiente_codigo}</tpAmb>
+              <xServ>STATUS</xServ>
+            </consStatServNFCom>
+          </nfcomDadosMsg>
         XML
       end
     end
