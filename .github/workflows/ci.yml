@@ -9,11 +9,7 @@ on:
 jobs:
   rubocop:
     runs-on: ubuntu-latest
-    name: RuboCop (Ruby ${{ matrix.ruby }})
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ['3.2', '3.3', '3.4']
+    name: RuboCop
 
     steps:
     - name: Checkout code
@@ -22,11 +18,8 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: ${{ matrix.ruby }}
+        ruby-version: '3.4'
         bundler-cache: true
-
-    - name: Install dependencies
-      run: bundle install
 
     - name: Run RuboCop
       run: bundle exec rubocop --format progress --format json --out rubocop-results.json
@@ -35,8 +28,8 @@ jobs:
       uses: actions/upload-artifact@v6
       if: always()
       with:
-        name: rubocop-results-ruby-${{ matrix.ruby }}
-        path: rubocop-results.json
+        name: rubocop-results
+        path: rubocop-results.json  
 
   rspec:
     runs-on: ubuntu-latest
