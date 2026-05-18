@@ -8,6 +8,7 @@ gemspec
 gem 'base64'
 gem 'css_parser', '~> 1.22'
 gem 'matrix'
+gem 'parallel', '< 2.0'
 gem 'pry', '~> 0.14'
 gem 'rake', '~> 13.0'
 gem 'rubocop', '~> 1.50'
