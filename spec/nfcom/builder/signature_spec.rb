@@ -1,44 +1,10 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'openssl'
-require 'tmpdir'
 
 RSpec.describe Nfcom::Builder::Signature do
-  # ---------------------------------------------------------------------------
-  # Certificado auto-assinado gerado em memória — sem fixture em disco,
-  # sem dados reais de produção.
-  # ---------------------------------------------------------------------------
-  let(:chave_privada) { OpenSSL::PKey::RSA.generate(2048) }
-
-  let(:certificado) do
-    cert = OpenSSL::X509::Certificate.new
-    cert.version   = 2
-    cert.serial    = 1
-    cert.subject   = OpenSSL::X509::Name.parse('/CN=Teste NFCom/O=Teste/C=BR')
-    cert.issuer    = cert.subject
-    cert.public_key = chave_privada.public_key
-    cert.not_before = Time.now - 60
-    cert.not_after  = Time.now + (365 * 24 * 3600) # 1 year
-    cert.sign(chave_privada, OpenSSL::Digest.new('SHA256'))
-    cert
-  end
-
-  let(:pfx_path) do
-    pfx = OpenSSL::PKCS12.create('senha_teste', 'teste', chave_privada, certificado)
-    path = File.join(Dir.tmpdir, 'teste_nfcom.pfx')
-    File.binwrite(path, pfx.to_der)
-    path
-  end
-
-  let(:configuration) do
-    config = Nfcom::Configuration.new
-    config.certificado_path  = pfx_path
-    config.certificado_senha = 'senha_teste'
-    config.estado            = 'PE'
-    config.ambiente          = :homologacao
-    config
-  end
+  include_context 'com certificado mockado'
+  include_context 'com configuração padrão'
 
   let(:assinador) { described_class.new(configuration) }
 
@@ -55,10 +21,6 @@ RSpec.describe Nfcom::Builder::Signature do
       </NFCom>
     XML
   end
-
-  after { FileUtils.rm_f(pfx_path) }
-
-  # ---------------------------------------------------------------------------
 
   describe '#assinar' do
     subject(:xml_assinado) { assinador.assinar(xml_valido) }
@@ -110,7 +72,7 @@ RSpec.describe Nfcom::Builder::Signature do
       cert_der  = Base64.decode64(x509_node.text)
       cert      = OpenSSL::X509::Certificate.new(cert_der)
 
-      expect(cert.subject.to_s).to include('Teste NFCom')
+      expect(cert.subject.to_s).to include('00000000000191')
     end
 
     it 'referencia o Id correto de infNFCom' do
@@ -121,15 +83,15 @@ RSpec.describe Nfcom::Builder::Signature do
     end
 
     it 'a assinatura pode ser verificada com a chave pública do certificado' do
-      doc        = Nokogiri::XML(xml_assinado)
-      ns         = { 'ds' => 'http://www.w3.org/2000/09/xmldsig#' }
+      doc = Nokogiri::XML(xml_assinado)
+      ns  = { 'ds' => 'http://www.w3.org/2000/09/xmldsig#' }
 
-      sig_value = Base64.decode64(doc.at_xpath('//ds:SignatureValue', ns).text)
+      sig_value   = Base64.decode64(doc.at_xpath('//ds:SignatureValue', ns).text)
       signed_info = doc.at_xpath('//ds:SignedInfo', ns)
       canonicalized = signed_info.canonicalize(Nokogiri::XML::XML_C14N_1_0)
 
       expect(
-        certificado.public_key.verify(OpenSSL::Digest.new('SHA1'), sig_value, canonicalized)
+        certificado_x509.public_key.verify(OpenSSL::Digest.new('SHA1'), sig_value, canonicalized)
       ).to be true
     end
 

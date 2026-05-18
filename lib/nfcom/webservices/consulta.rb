@@ -44,15 +44,14 @@ module Nfcom
       end
 
       def build_consulta_body(chave_acesso)
-        <<~XML
-          <nfcomConsultaNF xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta">
-            <NFComDadosMsg>
-              <consSitNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
-                <tpAmb>#{configuration.ambiente_codigo}</tpAmb>
-                <chNFCom>#{chave_acesso}</chNFCom>
-              </consSitNFCom>
-            </NFComDadosMsg>
-          </nfcomConsultaNF>
+        <<~XML.strip
+          <nfcomDadosMsg xmlns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta">
+            <consSitNFCom xmlns="http://www.portalfiscal.inf.br/nfcom" versao="1.00">
+              <tpAmb>#{configuration.ambiente_codigo}</tpAmb>
+              <xServ>CONSULTAR</xServ>
+              <chNFCom>#{chave_acesso}</chNFCom>
+            </consSitNFCom>
+          </nfcomDadosMsg>
         XML
       end
     end

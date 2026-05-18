@@ -104,7 +104,8 @@ module Nfcom
       def renderizar_logo_svg(pdf, y_pos)
         raise 'prawn-svg não instalado' unless defined?(Prawn::Svg)
 
-        pdf.svg File.read(logo_path.to_s), at: [0, y_pos - 2.mm], width: 40.mm, height: 18.mm
+        pdf.svg File.read(logo_path.to_s), at: [0, y_pos - 2.mm], width: 40.mm, height: 18.mm,
+                                           enable_web_requests: false
       end
 
       # ----------------------------
@@ -198,7 +199,7 @@ module Nfcom
         qr_svg = qr_builder.gerar_qrcode_svg
 
         # Render SVG (prawn-svg converts string to SVG)
-        pdf.svg qr_svg, at: [2.mm, y_pos - 2.mm], width: 26.mm, height: 26.mm
+        pdf.svg qr_svg, at: [2.mm, y_pos - 2.mm], width: 26.mm, height: 26.mm, enable_web_requests: false
       rescue StandardError => e
         warn "QR Code error: #{e.message}"
         pdf.stroke_rectangle [2.mm, y_pos - 2.mm], 22.mm, 22.mm

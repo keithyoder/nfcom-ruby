@@ -44,7 +44,11 @@ require_relative 'nfcom/validators/business_rules'
 require_relative 'nfcom/validators/schema_validator'
 
 # Parsers
-require_relative 'nfcom/parsers/response_parser'
+require_relative 'nfcom/parsers/base'
+require_relative 'nfcom/parsers/autorizacao'
+require_relative 'nfcom/parsers/consulta'
+require_relative 'nfcom/parsers/status'
+require_relative 'nfcom/parsers/inutilizacao'
 
 # Gem Nfcom - Emissão de NF-COM (Nota Fiscal de Comunicação) modelo 62
 #

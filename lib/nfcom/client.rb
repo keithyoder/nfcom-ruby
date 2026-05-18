@@ -29,10 +29,10 @@ module Nfcom
       tentativa = 0
       begin
         ws = Webservices::Autorizacao.new(configuration)
-        response = ws.enviar(xml_assinado)
+        resposta = ws.enviar(xml_assinado)
 
-        parser = Parsers::ResponseParser.new(response)
-        resultado = parser.parse_autorizacao
+        parser = Parsers::Autorizacao.new(resposta)
+        resultado = parser.parse
 
         nota.protocolo = resultado[:protocolo]
         nota.data_autorizacao = resultado[:data_autorizacao]
@@ -58,8 +58,8 @@ module Nfcom
       ws = Webservices::Consulta.new(configuration)
       resposta = ws.consultar(chave)
 
-      parser = Parsers::ResponseParser.new(resposta)
-      parser.parse_consulta
+      parser = Parsers::Consulta.new(resposta)
+      parser.parse
     end
 
     # Verifica status do serviço da SEFAZ
@@ -69,8 +69,8 @@ module Nfcom
       ws = Webservices::Status.new(configuration)
       resposta = ws.verificar
 
-      parser = Parsers::ResponseParser.new(resposta)
-      parser.parse_status
+      parser = Parsers::Status.new(resposta)
+      parser.parse
     end
 
     # Inutiliza uma numeração de nota
@@ -87,8 +87,8 @@ module Nfcom
         justificativa: justificativa
       )
 
-      parser = Parsers::ResponseParser.new(resposta)
-      parser.parse_inutilizacao
+      parser = Parsers::Inutilizacao.new(resposta)
+      parser.parse
     end
 
     private
