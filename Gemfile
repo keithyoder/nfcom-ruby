@@ -6,6 +6,7 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'base64'
+gem 'css_parser', '< 2.2.0'
 gem 'matrix'
 gem 'pry', '~> 0.14'
 gem 'rake', '~> 13.0'
