@@ -10,7 +10,7 @@ jobs:
   rubocop:
     runs-on: ubuntu-latest
     name: RuboCop
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -18,11 +18,8 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: '3.2'
+        ruby-version: '3.4'
         bundler-cache: true
-
-    - name: Install dependencies
-      run: bundle install
 
     - name: Run RuboCop
       run: bundle exec rubocop --format progress --format json --out rubocop-results.json
@@ -32,12 +29,16 @@ jobs:
       if: always()
       with:
         name: rubocop-results
-        path: rubocop-results.json
+        path: rubocop-results.json  
 
   rspec:
     runs-on: ubuntu-latest
-    name: RSpec Tests
-    
+    name: RSpec Tests (Ruby ${{ matrix.ruby }})
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.2', '3.3', '3.4']
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -45,7 +46,7 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: '3.2'
+        ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
 
     - name: Install dependencies
@@ -58,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build Gem
     needs: [rubocop, rspec]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -66,7 +67,7 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: '3.2'
+        ruby-version: '3.4'
         bundler-cache: true
 
     - name: Build gem

@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = 'Gem para integração com SEFAZ para emissão de NF-COM, incluindo geração ' \
                      'de XML, assinatura digital, envio e consulta de notas fiscais ' \
                      'de serviços de comunicação e telecomunicação'
-  spec.homepage = 'https://github.com/keithyoder/nfcom'
+  spec.homepage = 'https://github.com/keithyoder/nfcom-ruby'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.7', '< 4.0'
 
@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'nokogiri', '>= 1.15.7', '< 2.0'
+  spec.add_dependency 'nokogiri', '>= 1.19.3', '< 2.0'
   spec.add_dependency 'openssl', '>= 2.0', '< 5.0'
   spec.add_dependency 'prawn', '>= 2.4', '< 3.0'
   spec.add_dependency 'prawn-qrcode', '>= 0.3', '< 1.0'
