@@ -125,13 +125,13 @@ RSpec.describe Nfcom::Models::Item do
       it 'aceita o valor mas falha na validação (símbolo inválido)' do
         item.classe_consumo = :invalido
         expect(item).not_to be_valido
-        expect(item.erros).to include(match(/Classe de consumo/))
+        expect(item.erros).to include(include('Classe de consumo'))
       end
 
       it 'aceita o valor mas falha na validação (código inválido)' do
         item.classe_consumo = '9999999'
         expect(item).not_to be_valido
-        expect(item.erros).to include(match(/Classe de consumo/))
+        expect(item.erros).to include(include('Classe de consumo'))
       end
     end
   end
@@ -168,13 +168,13 @@ RSpec.describe Nfcom::Models::Item do
       it 'aceita o valor mas falha na validação (símbolo inválido)' do
         item.unidade = :invalido
         expect(item).not_to be_valido
-        expect(item.erros).to include(match(/Unidade de medida/))
+        expect(item.erros).to include(include('Unidade de medida'))
       end
 
       it 'aceita o valor mas falha na validação (código inválido)' do
         item.unidade = 99
         expect(item).not_to be_valido
-        expect(item.erros).to include(match(/Unidade de medida/))
+        expect(item.erros).to include(include('Unidade de medida'))
       end
     end
   end
@@ -242,13 +242,13 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'valida formato (ER47)' do
         item = described_class.new(base_attrs.merge(codigo_servico: '0303'))
-        expect(item.erros).not_to include(match(/Código de serviço/))
+        expect(item.erros).not_to include(include('Código de serviço'))
       end
 
       it 'aceita até 60 caracteres' do
         codigo_longo = 'A' * 60
         item = described_class.new(base_attrs.merge(codigo_servico: codigo_longo))
-        expect(item.erros).not_to include(match(/Código de serviço/))
+        expect(item.erros).not_to include(include('Código de serviço'))
       end
     end
 
@@ -270,13 +270,13 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'valida formato (ER47)' do
         item = described_class.new(base_attrs.merge(descricao: 'Plano Internet'))
-        expect(item.erros).not_to include(match(/Descrição/))
+        expect(item.erros).not_to include(include('Descrição'))
       end
 
       it 'aceita até 120 caracteres' do
         descricao_longa = "Plano #{'A' * 114}"
         item = described_class.new(base_attrs.merge(descricao: descricao_longa))
-        expect(item.erros).not_to include(match(/Descrição/))
+        expect(item.erros).not_to include(include('Descrição'))
       end
     end
 
@@ -298,17 +298,17 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'valida formato de 7 dígitos (ER2)' do
         item = described_class.new(base_attrs.merge(classe_consumo: '0100401'))
-        expect(item.erros).not_to include(match(/Classe de consumo/))
+        expect(item.erros).not_to include(include('Classe de consumo'))
       end
 
       it 'rejeita código com menos de 7 dígitos' do
         item = described_class.new(base_attrs.merge(classe_consumo: '123456'))
-        expect(item.erros).to include(match(/Classe de consumo inválido/))
+        expect(item.erros).to include(include('Classe de consumo inválido'))
       end
 
       it 'rejeita código com mais de 7 dígitos' do
         item = described_class.new(base_attrs.merge(classe_consumo: '12345678'))
-        expect(item.erros).to include(match(/Classe de consumo inválido/))
+        expect(item.erros).to include(include('Classe de consumo inválido'))
       end
     end
 
@@ -330,21 +330,21 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'valida formato (ER73)' do
         item = described_class.new(base_attrs.merge(cfop: '5307'))
-        expect(item.erros).not_to include(match(/CFOP/))
+        expect(item.erros).not_to include(include('CFOP'))
       end
 
       it 'aceita CFOPs válidos de serviço' do
         aggregate_failures do
           %w[5307 6307 5351 6351].each do |cfop|
             item = described_class.new(base_attrs.merge(cfop: cfop))
-            expect(item.erros).not_to include(match(/CFOP/)), "falhou para CFOP #{cfop}"
+            expect(item.erros).not_to include(include('CFOP')), "falhou para CFOP #{cfop}"
           end
         end
       end
 
       it 'rejeita CFOP inválido' do
         item = described_class.new(base_attrs.merge(cfop: '9999'))
-        expect(item.erros).to include(match(/CFOP inválido/))
+        expect(item.erros).to include(include('CFOP inválido'))
       end
     end
 
@@ -364,7 +364,7 @@ RSpec.describe Nfcom::Models::Item do
         aggregate_failures do
           [1, 2, 3, 4].each do |unidade_codigo|
             item = described_class.new(base_attrs.merge(unidade: unidade_codigo))
-            expect(item.erros).not_to include(match(/Unidade/)), "falhou para unidade #{unidade_codigo}"
+            expect(item.erros).not_to include(include('Unidade')), "falhou para unidade #{unidade_codigo}"
           end
         end
       end
@@ -372,7 +372,7 @@ RSpec.describe Nfcom::Models::Item do
       it 'rejeita unidade inválida' do
         item = described_class.new(base_attrs.merge(unidade: 99))
         expect(item).not_to be_valido
-        expect(item.erros).to include(match(/Unidade de medida/))
+        expect(item.erros).to include(include('Unidade de medida'))
       end
     end
 
@@ -404,12 +404,12 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'aceita quantidade válida (ER31)' do
         item = described_class.new(base_attrs.merge(quantidade: 1.5))
-        expect(item.erros).not_to include(match(/Quantidade/))
+        expect(item.erros).not_to include(include('Quantidade'))
       end
 
       it 'aceita quantidade com até 4 decimais' do
         item = described_class.new(base_attrs.merge(quantidade: 1.2345))
-        expect(item.erros).not_to include(match(/Quantidade/))
+        expect(item.erros).not_to include(include('Quantidade'))
       end
     end
 
@@ -441,12 +441,12 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'aceita valor válido (ER39)' do
         item = described_class.new(base_attrs.merge(valor_unitario: 99.90))
-        expect(item.erros).not_to include(match(/Valor unitário/))
+        expect(item.erros).not_to include(include('Valor unitário'))
       end
 
       it 'aceita valores com até 8 decimais' do
         item = described_class.new(base_attrs.merge(valor_unitario: 99.12345678))
-        expect(item.erros).not_to include(match(/Valor unitário/))
+        expect(item.erros).not_to include(include('Valor unitário'))
       end
     end
 
@@ -464,12 +464,12 @@ RSpec.describe Nfcom::Models::Item do
 
       it 'aceita valor_desconto válido (ER37)' do
         item = described_class.new(base_attrs.merge(valor_desconto: 10.00))
-        expect(item.erros).not_to include(match(/desconto/))
+        expect(item.erros).not_to include(include('desconto'))
       end
 
       it 'aceita valor_outras_despesas válido (ER37)' do
         item = described_class.new(base_attrs.merge(valor_outras_despesas: 5.00))
-        expect(item.erros).not_to include(match(/outras despesas/))
+        expect(item.erros).not_to include(include('outras despesas'))
       end
 
       it 'não valida campos opcionais quando zero' do
