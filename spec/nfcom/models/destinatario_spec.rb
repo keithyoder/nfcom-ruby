@@ -152,14 +152,14 @@ RSpec.describe Nfcom::Models::Destinatario do
     context 'com email inválido' do
       it 'inclui erro de formato' do
         dest = described_class.new(atributos_pf.merge(email: 'email-invalido'))
-        expect(dest.erros).to include(match(/Email/))
+        expect(dest.erros).to include(include('Email'))
       end
     end
 
     context 'com email válido' do
       it 'não inclui erro de email' do
         dest = described_class.new(atributos_pf.merge(email: 'joao@provedor.com.br'))
-        expect(dest.erros).not_to include(match(/Email/))
+        expect(dest.erros).not_to include(include('Email'))
       end
     end
 

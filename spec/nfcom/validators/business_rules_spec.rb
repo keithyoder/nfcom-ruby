@@ -61,7 +61,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
         nota.itens << item_valido
 
         erros = described_class.validar(nota)
-        expect(erros).not_to include(match(/Valor total da nota/))
+        expect(erros).not_to include(include('Valor total da nota'))
       end
     end
 
@@ -79,7 +79,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
         nota.itens << item_valido.dup.tap { |i| i.valor_total = 100.005 }
 
         erros = described_class.validar(nota)
-        expect(erros).not_to include(match(/Soma dos itens/))
+        expect(erros).not_to include(include('Soma dos itens'))
       end
 
       it 'rejeita diferença fora da tolerância' do
@@ -87,7 +87,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
         nota.itens << item_valido.dup.tap { |i| i.valor_total = 100.02 }
 
         erros = described_class.validar(nota)
-        expect(erros).to include(match(/Soma dos itens/))
+        expect(erros).to include(include('Soma dos itens'))
       end
 
       it 'valida corretamente com múltiplos itens' do
@@ -102,7 +102,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
         end
 
         erros = described_class.validar(nota)
-        expect(erros).not_to include(match(/Soma dos itens/))
+        expect(erros).not_to include(include('Soma dos itens'))
       end
 
       it 'detecta erro com múltiplos itens quando soma não confere' do
@@ -201,7 +201,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
 
         erros = described_class.validar(nota)
         expect(erros).to include('Código de serviço 9999 inválido para item 2')
-        expect(erros).not_to include(match(/Código de serviço 0303 inválido/))
+        expect(erros).not_to include(include('Código de serviço 0303 inválido'))
       end
     end
 
@@ -358,7 +358,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
 
         erros = described_class.validar(nota)
         expect(erros).to include('CFOP 1000 inválido para item 2')
-        expect(erros).not_to include(match(/CFOP 5307 inválido/))
+        expect(erros).not_to include(include('CFOP 5307 inválido'))
       end
     end
 
@@ -375,7 +375,7 @@ RSpec.describe Nfcom::Validators::BusinessRules do
 
         erros = described_class.validar(nota)
         expect(erros).to include('Valor total da nota não pode ser zero')
-        expect(erros).to include(match(/Soma dos itens/))
+        expect(erros).to include(include('Soma dos itens'))
         expect(erros).to include('Código de serviço 9999 inválido para item 1')
         expect(erros).to include('CFOP 1000 inválido para item 1')
       end

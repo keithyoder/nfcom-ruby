@@ -1,0 +1,6 @@
+# .bundler-audit.yml
+ignore:
+  - CVE-2026-53727 # css_parser SSRF/LFD via read_remote_file — not reachable;
+                    # css_parser only parses locally-sourced/self-generated SVG
+                    # (logo file, internally-built QR code), never remote/user CSS.
+                    # Revisit when css_parser ~> 3.0 lands with the Ruby 3.2 drop.

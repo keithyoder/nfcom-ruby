@@ -107,17 +107,17 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita logradouro válido' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/Logradouro/))
+        expect(endereco.erros).not_to include(include('Logradouro'))
       end
 
       it 'aceita logradouro com um caractere (ER47 permite)' do
         endereco = described_class.new(atributos_validos.merge(logradouro: 'A'))
-        expect(endereco.erros).not_to include(match(/Logradouro inválido/))
+        expect(endereco.erros).not_to include(include('Logradouro inválido'))
       end
 
       it 'aceita logradouro com 2 caracteres (ER47)' do
         endereco = described_class.new(atributos_validos.merge(logradouro: 'Av'))
-        expect(endereco.erros).not_to include(match(/Logradouro inválido/))
+        expect(endereco.erros).not_to include(include('Logradouro inválido'))
       end
     end
 
@@ -134,17 +134,17 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita "S/N" para endereços sem número' do
         endereco = described_class.new(atributos_validos.merge(numero: 'S/N'))
-        expect(endereco.erros).not_to include(match(/Número/))
+        expect(endereco.erros).not_to include(include('Número'))
       end
 
       it 'aceita número numérico' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/Número/))
+        expect(endereco.erros).not_to include(include('Número'))
       end
 
       it 'aceita número com letra' do
         endereco = described_class.new(atributos_validos.merge(numero: '123-A'))
-        expect(endereco.erros).not_to include(match(/Número/))
+        expect(endereco.erros).not_to include(include('Número'))
       end
     end
 
@@ -156,12 +156,12 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita bairro válido' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/Bairro/))
+        expect(endereco.erros).not_to include(include('Bairro'))
       end
 
       it 'aceita bairro com um caractere (ER47 permite)' do
         endereco = described_class.new(atributos_validos.merge(bairro: 'C'))
-        expect(endereco.erros).not_to include(match(/Bairro inválido/))
+        expect(endereco.erros).not_to include(include('Bairro inválido'))
       end
     end
 
@@ -173,12 +173,12 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita municipio válido' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/Município/))
+        expect(endereco.erros).not_to include(include('Município'))
       end
 
       it 'aceita município com um caractere (ER47 permite)' do
         endereco = described_class.new(atributos_validos.merge(municipio: 'R'))
-        expect(endereco.erros).not_to include(match(/Município inválido/))
+        expect(endereco.erros).not_to include(include('Município inválido'))
       end
     end
 
@@ -190,17 +190,17 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita código IBGE de 7 dígitos (ER2)' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/Código do município/))
+        expect(endereco.erros).not_to include(include('Código do município'))
       end
 
       it 'rejeita código com menos de 7 dígitos (ER2)' do
         endereco = described_class.new(atributos_validos.merge(codigo_municipio: '123456'))
-        expect(endereco.erros).to include(match(/Código do município inválido/))
+        expect(endereco.erros).to include(include('Código do município inválido'))
       end
 
       it 'rejeita código com mais de 7 dígitos (ER2)' do
         endereco = described_class.new(atributos_validos.merge(codigo_municipio: '12345678'))
-        expect(endereco.erros).to include(match(/Código do município inválido/))
+        expect(endereco.erros).to include(include('Código do município inválido'))
       end
     end
 
@@ -212,12 +212,12 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'aceita uf válida (D5)' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/UF/))
+        expect(endereco.erros).not_to include(include('UF'))
       end
 
       it 'rejeita uf inválida (D5)' do
         endereco = described_class.new(atributos_validos.merge(uf: 'XX'))
-        expect(endereco.erros).to include(match(/UF inválido/))
+        expect(endereco.erros).to include(include('UF inválido'))
       end
     end
 
@@ -229,27 +229,27 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'valida formato do CEP (8 dígitos) (ER67)' do
         endereco = described_class.new(atributos_validos.merge(cep: '5000'))
-        expect(endereco.erros).to include(match(/CEP inválido/))
+        expect(endereco.erros).to include(include('CEP inválido'))
       end
 
       it 'aceita CEP sem formatação (8 dígitos)' do
         endereco = described_class.new(atributos_validos)
-        expect(endereco.erros).not_to include(match(/CEP/))
+        expect(endereco.erros).not_to include(include('CEP'))
       end
 
       it 'aceita CEP com formatação (remove não dígitos)' do
         endereco = described_class.new(atributos_validos.merge(cep: '50000-000'))
-        expect(endereco.erros).not_to include(match(/CEP/))
+        expect(endereco.erros).not_to include(include('CEP'))
       end
 
       it 'rejeita CEP com mais de 8 dígitos' do
         endereco = described_class.new(atributos_validos.merge(cep: '500000000'))
-        expect(endereco.erros).to include(match(/CEP inválido/))
+        expect(endereco.erros).to include(include('CEP inválido'))
       end
 
       it 'rejeita CEP com menos de 8 dígitos' do
         endereco = described_class.new(atributos_validos.merge(cep: '5000000'))
-        expect(endereco.erros).to include(match(/CEP inválido/))
+        expect(endereco.erros).to include(include('CEP inválido'))
       end
     end
 
@@ -327,12 +327,12 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'rejeita telefone com menos de 7 dígitos (ER61)' do
         endereco = described_class.new(atributos_validos.merge(telefone: '123456'))
-        expect(endereco.erros).to include(match(/Telefone inválido/))
+        expect(endereco.erros).to include(include('Telefone inválido'))
       end
 
       it 'rejeita telefone com mais de 12 dígitos (ER61)' do
         endereco = described_class.new(atributos_validos.merge(telefone: '1234567890123'))
-        expect(endereco.erros).to include(match(/Telefone inválido/))
+        expect(endereco.erros).to include(include('Telefone inválido'))
       end
     end
 
@@ -351,12 +351,12 @@ RSpec.describe Nfcom::Models::Endereco do
 
       it 'rejeita email inválido sem @ (ER72)' do
         endereco = described_class.new(atributos_validos.merge(email: 'emailinvalido'))
-        expect(endereco.erros).to include(match(/Email inválido/))
+        expect(endereco.erros).to include(include('Email inválido'))
       end
 
       it 'rejeita email inválido sem domínio (ER72)' do
         endereco = described_class.new(atributos_validos.merge(email: 'usuario@'))
-        expect(endereco.erros).to include(match(/Email inválido/))
+        expect(endereco.erros).to include(include('Email inválido'))
       end
     end
   end

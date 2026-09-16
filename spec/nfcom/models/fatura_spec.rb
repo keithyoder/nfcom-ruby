@@ -143,7 +143,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '123',
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Competência/))
+        expect(fatura.erros).not_to include(include('Competência'))
       end
     end
 
@@ -184,7 +184,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '123',
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Data de vencimento/))
+        expect(fatura.erros).not_to include(include('Data de vencimento'))
       end
 
       it 'aceita objeto Date' do
@@ -194,7 +194,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '123',
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Data de vencimento/))
+        expect(fatura.erros).not_to include(include('Data de vencimento'))
       end
     end
 
@@ -225,7 +225,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '1' * 48,
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Código de barras/))
+        expect(fatura.erros).not_to include(include('Código de barras'))
       end
 
       it 'aceita codigo_barras mais curto' do
@@ -235,7 +235,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '123456789',
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Código de barras/))
+        expect(fatura.erros).not_to include(include('Código de barras'))
       end
     end
 
@@ -276,7 +276,7 @@ RSpec.describe Nfcom::Models::Fatura do
           codigo_barras: '123',
           valor_fatura: 99.90
         )
-        expect(fatura.erros).not_to include(match(/Valor da fatura/))
+        expect(fatura.erros).not_to include(include('Valor da fatura'))
       end
     end
 
@@ -321,7 +321,7 @@ RSpec.describe Nfcom::Models::Fatura do
             periodo_uso_fim: '2026-01-31'
           )
         )
-        expect(fatura.erros).not_to include(match(/Período de uso/))
+        expect(fatura.erros).not_to include(include('Período de uso'))
       end
 
       it 'aceita periodo_uso válido com objetos Date' do
@@ -331,7 +331,7 @@ RSpec.describe Nfcom::Models::Fatura do
             periodo_uso_fim: Date.new(2026, 1, 31)
           )
         )
-        expect(fatura.erros).not_to include(match(/Período de uso/))
+        expect(fatura.erros).not_to include(include('Período de uso'))
       end
 
       it 'aceita mesma data para início e fim' do
@@ -341,7 +341,7 @@ RSpec.describe Nfcom::Models::Fatura do
             periodo_uso_fim: '2026-01-15'
           )
         )
-        expect(fatura.erros).not_to include(match(/Período de uso/))
+        expect(fatura.erros).not_to include(include('Período de uso'))
       end
 
       it 'valida strings de data inválidas' do
@@ -393,12 +393,12 @@ RSpec.describe Nfcom::Models::Fatura do
             codigo_agencia: '1234'
           )
         )
-        expect(fatura.erros).not_to include(match(/débito automático/))
+        expect(fatura.erros).not_to include(include('débito automático'))
       end
 
       it 'não exige banco/agencia quando debito_automatico não está definido' do
         fatura = described_class.new(atributos_base)
-        expect(fatura.erros).not_to include(match(/débito automático/))
+        expect(fatura.erros).not_to include(include('débito automático'))
       end
     end
 

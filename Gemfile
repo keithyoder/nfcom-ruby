@@ -19,5 +19,5 @@ gem 'webmock', '~> 3.18'
 group :test do
   gem 'bundler-audit', '~> 0.9', require: false
   gem 'rspec', '~> 3.12'
-  gem 'simplecov', require: false
+  gem 'simplecov', '< 1.3', require: false
 end

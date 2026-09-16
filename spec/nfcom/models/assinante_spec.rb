@@ -130,7 +130,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de validação' do
-          expect(assinante.erros).to include(match(/Código do assinante inválido/))
+          expect(assinante.erros).to include(include('Código do assinante inválido'))
         end
       end
 
@@ -144,7 +144,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erro de formato' do
-          expect(assinante.erros).not_to include(match(/Código do assinante inválido/))
+          expect(assinante.erros).not_to include(include('Código do assinante inválido'))
         end
       end
 
@@ -160,7 +160,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de validação' do
-          expect(assinante.erros).to include(match(/Número do contrato inválido/))
+          expect(assinante.erros).to include(include('Número do contrato inválido'))
         end
       end
 
@@ -175,7 +175,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erro de formato' do
-          expect(assinante.erros).not_to include(match(/Número do contrato inválido/))
+          expect(assinante.erros).not_to include(include('Número do contrato inválido'))
         end
       end
     end
@@ -191,7 +191,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro informando tipo inválido' do
-          expect(assinante.erros).to include(match(/Tipo de assinante inválido/))
+          expect(assinante.erros).to include(include('Tipo de assinante inválido'))
         end
       end
 
@@ -204,7 +204,7 @@ RSpec.describe Nfcom::Models::Assinante do
                 tipo: tipo_valido,
                 tipo_servico: described_class::SERVICO_INTERNET
               )
-              expect(assinante.erros).not_to include(match(/Tipo de assinante inválido/)),
+              expect(assinante.erros).not_to include(include('Tipo de assinante inválido')),
                                              "falhou para tipo #{tipo_valido}"
             end
           end
@@ -221,7 +221,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro informando tipo de serviço inválido' do
-          expect(assinante.erros).to include(match(/Tipo de serviço inválido/))
+          expect(assinante.erros).to include(include('Tipo de serviço inválido'))
         end
       end
 
@@ -234,7 +234,7 @@ RSpec.describe Nfcom::Models::Assinante do
                 tipo: described_class::TIPO_RESIDENCIAL,
                 tipo_servico: servico_valido
               )
-              expect(assinante.erros).not_to include(match(/Tipo de serviço inválido/)),
+              expect(assinante.erros).not_to include(include('Tipo de serviço inválido')),
                                              "falhou para serviço #{servico_valido}"
             end
           end
@@ -253,7 +253,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro informando UF inválida' do
-          expect(assinante.erros).to include(match(/UF do terminal inválido/))
+          expect(assinante.erros).to include(include('UF do terminal inválido'))
         end
       end
 
@@ -269,7 +269,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erro de UF' do
-          expect(assinante.erros).not_to include(match(/UF do terminal inválido/))
+          expect(assinante.erros).not_to include(include('UF do terminal inválido'))
         end
       end
     end
@@ -286,7 +286,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de formato de data' do
-          expect(assinante.erros).to include(match(/Data de início inválido/))
+          expect(assinante.erros).to include(include('Data de início inválido'))
         end
       end
 
@@ -302,7 +302,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de formato de data' do
-          expect(assinante.erros).to include(match(/Data de fim inválido/))
+          expect(assinante.erros).to include(include('Data de fim inválido'))
         end
       end
 
@@ -334,7 +334,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erros de data' do
-          expect(assinante.erros).not_to include(match(/Data/))
+          expect(assinante.erros).not_to include(include('Data'))
         end
       end
     end
@@ -352,7 +352,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de formato de telefone' do
-          expect(assinante.erros).to include(match(/Terminal principal inválido/))
+          expect(assinante.erros).to include(include('Terminal principal inválido'))
         end
       end
 
@@ -368,7 +368,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de formato de telefone' do
-          expect(assinante.erros).to include(match(/Terminal principal inválido/))
+          expect(assinante.erros).to include(include('Terminal principal inválido'))
         end
       end
 
@@ -384,7 +384,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erro de formato' do
-          expect(assinante.erros).not_to include(match(/Terminal principal inválido/))
+          expect(assinante.erros).not_to include(include('Terminal principal inválido'))
         end
       end
     end
@@ -432,7 +432,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erros condicionais' do
-          expect(assinante.erros).not_to include(match(/obrigatório/))
+          expect(assinante.erros).not_to include(include('obrigatório'))
         end
       end
 
@@ -499,7 +499,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de formato' do
-          expect(assinante.erros).to include(match(/Terminal adicional 1 inválido/))
+          expect(assinante.erros).to include(include('Terminal adicional 1 inválido'))
         end
       end
 
@@ -516,7 +516,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'retorna erro de UF' do
-          expect(assinante.erros).to include(match(/UF do terminal adicional 1 inválido/))
+          expect(assinante.erros).to include(include('UF do terminal adicional 1 inválido'))
         end
       end
 
@@ -535,8 +535,8 @@ RSpec.describe Nfcom::Models::Assinante do
 
         it 'retorna erros para ambos os terminais' do
           aggregate_failures do
-            expect(assinante.erros).to include(match(/Terminal adicional 1 inválido/))
-            expect(assinante.erros).to include(match(/UF do terminal adicional 2 inválido/))
+            expect(assinante.erros).to include(include('Terminal adicional 1 inválido'))
+            expect(assinante.erros).to include(include('UF do terminal adicional 2 inválido'))
           end
         end
       end
@@ -555,7 +555,7 @@ RSpec.describe Nfcom::Models::Assinante do
         end
 
         it 'não retorna erros de terminais adicionais' do
-          expect(assinante.erros).not_to include(match(/Terminal adicional/))
+          expect(assinante.erros).not_to include(include('Terminal adicional'))
         end
       end
     end
